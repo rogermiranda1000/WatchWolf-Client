@@ -1,2 +1,7 @@
-deps
+deps/*
+
+build/*
+bin/*
+lib/*
+
 login.txt
