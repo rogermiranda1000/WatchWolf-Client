@@ -1,4 +1,4 @@
-# MinecraftTester
+# WatchWolf - MC Client
 A C++ library to test Minecraft Plugins
 
 ## Dependencies

@@ -38,6 +38,7 @@
 	\usepackage{url} 		% not crucial - just used below for the URL
 	\usepackage{bytefield} 	% network protocol
 	\usepackage{hyperref} 	% go to labels on click
+	\usepackage[acronym]{glossaries}
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	% centered bytefield
@@ -47,6 +48,17 @@
 	
 	% TODOs
 	\newcommand\myworries[1]{\sethlcolor{red}\hl{#1}}
+	
+	% acronyms
+	\makeglossaries
+	\newglossaryentry{NOP} {
+		name=NOP,
+		description={No OPeration. It represents a valid operation that means 'do nothing'.}
+	}
+	\newglossaryentry{async} {
+		name=async,
+		description={Asynchronous; returned non-sequentially.}
+	}
 	
 	%%%%% Author package list and commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	%%%%% Here are some examples %%%%%%%%%%%%%%
@@ -104,13 +116,11 @@ We thank you for your attention to these details.
 
 
 \section{Introduction} \label{s:intro}
-A paper starts off with the section introducing the research problem and explaining the background and motivation.
-
-TODO explicar los distintos protocolos que se hablaran a continuación.
+\myworries{explicar los distintos protocolos que se hablaran a continuacion}
 
 \begin{cbytefield}{32}
-	\bitheader{0,2,3,15,16,31} \\
-	\bitbox{3}{\hyperref[s:dst]{DST}} & \bitbox{13}{\hyperref[s:type]{type}} & \bitbox[lrt]{16}{} \\
+	\bitheader{0,2,3,4,15,16,31} \\
+	\bitbox{3}{\hyperref[s:dst]{DST}} & \bitbox{1}{\hyperref[s:response]{r}} & \bitbox{12}{\hyperref[s:type]{type}} & \bitbox[lrt]{16}{} \\
 	\wordbox[lr]{1}{\hyperref[s:args]{arguments}} \\
 	\skippedwords \\
 	\wordbox[lrb]{1}{}
@@ -130,21 +140,58 @@ TODO explicar los distintos protocolos que se hablaran a continuación.
 	0 & 0 & 1 & ServerPetition \\
 	0 & 1 & 0 & ClientConnectorPetition \\
 	0 & 1 & 1 & ClientPetition \\
-	1 & 0 & 0 & TesterConnector (ServerManagerReply) \\
-	1 & 0 & 1 & TesterConnector (ServerReply) \\
-	1 & 1 & 0 & TesterConnector (ClientConnectorReply) \\
-	1 & 1 & 1 & TesterConnector (ClientReply) \\
+	\hline
+	1 & X & X & \textit{Reserved} \\
 	\hline
 \end{tabular}
 \end{center}
 
-\subsection{Type} \label{s:type}
-The type parameter specifies the desired request. Those change according to the \hyperref[s:dst]{Destiny}, so they will be discussed in more detail in their respective sections.
+\subsection{Response} \label{s:response}
+Some of the petitions have return objects. Those petitions will return to the sender (TesterConnector) with the same code, but with a '1' on the Response parameter. In that case, the parameter \hyperref[s:dst]{Destiny} now means 'Origin'.
 
-The only exception is the all-zeroes type (0b0000000000000) which represents a NOP request. That way, if you need to perform a long test, you won't be \myworries{explain the 'kicked by inactivity' concept} kicked by inactivity if you send this request every few minutes.
+Some petitions have \gls{async} "returns" (for example: \myworries{examples}). Those will be sent using petitions without return's \hyperref[s:type]{Type} (so, petitions without a mirror petition with a '1' as Response), marked as responses (Response bit at '1').
+
+\subsection{Type} \label{s:type}
+The Type parameter specifies the desired request. Those change according to the \hyperref[s:dst]{Destiny}, so they will be discussed in more detail in their respective sections.
+
+The only exception is the all-zeroes type (0b000000000000) which represents a \gls{NOP} request. That way, if you need to perform a long test, you won't be \myworries{explain the 'kicked by inactivity' concept} kicked by inactivity if you send this request every few minutes.
 
 \subsection{Arguments} \label{s:args}
-a
+The Arguments parameter specifies the arguments (if any) to the \textit{\hyperref[s:type]{Type}} request. Those change according to the \hyperref[s:dst]{Destiny}, so the amount of arguments, and their types and order will be discussed in more detail in their respective sections.
+
+Now there will be discussed the most common data types, so they will be independent of any programming language.
+
+\subsubsection{Character}\label{type:char}
+Characters are sent as a 1-byte integer, representing its ASCII \myworries{ref?} value.
+
+\subsubsection{Strings}\label{type:str}
+Strings are \hyperref[type:array]{arrays} of \hyperref[type:char]{characters}. Refer to the respective subsections for more information.
+
+\subsubsection{Array}\label{type:array}
+Arrays are a set of \textit{n} elements of the same type.
+
+The structure is a 2-byte \myworries{big endian?} integer (representing the number of elements, \textit{n}), followed by \textit{n} elements of the same type. As a note here, by representing the size with a 2-byte integer the maximum number of elements per array is 65,535.
+
+\begin{cbytefield}{32}
+	\bitheader{0,15,16,23,24,31} \\
+	\bitbox{16}{size} & \bitbox{8}{char[0]} & \bitbox{8}{char[1]} \\
+	\wordbox[ltr]{1}{...} \\
+	\skippedwords \\
+	\wordbox[lrb]{1}{} \\
+	\bitbox{8}{char[n-4]} & \bitbox{8}{char[n-3]} & \bitbox{8}{char[n-2]} & \bitbox{8}{char[n-1]}
+\end{cbytefield}
+\myworries{label} Structure of a \hyperref[type:str]{String}.
+
+Arrays can be multidimensional \myworries{define?}, holding \textit{n} arrays of the same type. It's worth mentioning that they don't have to be arrays of the same length:
+\begin{cbytefield}{32}
+	\bitheader{0,15,16,23,24,31} \\
+	\bitbox{16}{2 [number of arrays]} & \bitbox{16}{5 [str[0]'s length]} \\
+	\bitbox{8}{h} & \bitbox{8}{e} & \bitbox{8}{l} & \bitbox{8}{l} \\
+	\bitbox{8}{o} & \bitbox{16}{6 [str[1]'s length]} & \bitbox{8}{w} \\
+	\bitbox{8}{o} & \bitbox{8}{r} & \bitbox{8}{l} & \bitbox{8}{d} \\
+	\bitbox{8}{!} & \bitbox{24}[bgcolor=lightgray]{next type}
+\end{cbytefield}
+\myworries{label} Example of a string array.
 
 \section{Server Manager petition} \label{s:methods}
 First-level headings should be in bold.
@@ -168,6 +215,17 @@ Perhaps numerical analysis of performance, comparison, and demonstration of appl
 \section{Conclusion}\label{s:conclusion}
 A paper ends with a conclusion or summary section.
 
+\section{Revision history}
+\begin{center}
+\begin{tabular}{ |c|c|c| }
+	\hline
+	Date & Revision & Changes \\
+	\hline
+	\myworries{date} & 1 & Initial release. \\
+	\hline
+\end{tabular}
+\end{center}
+
 \if0\blind{
 \section*{Acknowledgements}
 The authors acknowledge the generous support from the funding agency of XYZ.	} \fi
@@ -175,5 +233,7 @@ The authors acknowledge the generous support from the funding agency of XYZ.	} \
 \bibliographystyle{chicago}
 \spacingset{1}
 \bibliography{IISE-Trans}
+
+\printglossary
 	
 \end{document}
