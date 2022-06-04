@@ -5,6 +5,8 @@
 	% NOTE: To produce blinded version, replace "0" with "1" below.
 	\newcommand{\blind}{0}
 	
+	\AddToHook{cmd/section/before}{\clearpage} % all sections in new page
+	
 	%%%%%%% IISE Transactions margin specifications %%%%%%%%%%%%%%%%%%%
 	% DON'T change margins - should be 1 inch all around.
 	\addtolength{\oddsidemargin}{-.5in}%
@@ -34,11 +36,11 @@
 	\usepackage{enumerate}
 	\usepackage{xcolor}
 	\usepackage{soul}		% highlight
-	\usepackage{natbib} 		% comment out if you do not have the package
 	\usepackage{url} 		% not crucial - just used below for the URL
 	\usepackage{bytefield} 	% network protocol
 	\usepackage{hyperref} 	% go to labels on click
-	\usepackage[acronym]{glossaries}
+	\usepackage{natbib} 		% bibliography
+	\usepackage[acronym,section=subsection]{glossaries}
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	% centered bytefield
@@ -59,6 +61,11 @@
 		name=async,
 		description={Asynchronous; returned non-sequentially.}
 	}
+	\newglossaryentry{IEEE-754} {
+		name=IEEE 754,
+		description={IEEE Standard for Floating-Point Arithmetic (IEEE 754 \cite{IEEE-754}) is a standard for computing floating-points operations.}
+	}
+
 	
 	%%%%% Author package list and commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	%%%%% Here are some examples %%%%%%%%%%%%%%
@@ -114,6 +121,16 @@ We thank you for your attention to these details.
 	%\newpage
 	\spacingset{1.5} % DON'T change the spacing!
 
+\maketitle
+\tableofcontents
+
+\section{Documentation conventions}
+\myworries{...}
+
+\myworries{abbreviations}
+
+% Glossary
+\printglossary[numberedsection]
 
 \section{Introduction} \label{s:intro}
 \myworries{explicar los distintos protocolos que se hablaran a continuacion}
@@ -164,6 +181,12 @@ Now there will be discussed the most common data types, so they will be independ
 \subsubsection{Character}\label{type:char}
 Characters are sent as a 1-byte integer, representing its ASCII \myworries{ref?} value.
 
+\subsubsection{Integer}\label{type:int}
+Integers are signed 4-bytes integers.
+
+\subsubsection{Float}\label{type:float}
+Floats are 4-bytes floating-point numbers. They are represented following the \gls{IEEE-754}.
+
 \subsubsection{Strings}\label{type:str}
 Strings are \hyperref[type:array]{arrays} of \hyperref[type:char]{characters}. Refer to the respective subsections for more information.
 
@@ -212,9 +235,6 @@ Third-level headings should be in italics.
 \section{Section heading 4} \label{s:numerical}
 Perhaps numerical analysis of performance, comparison, and demonstration of applicability and impact using real data.
 
-\section{Conclusion}\label{s:conclusion}
-A paper ends with a conclusion or summary section.
-
 \section{Revision history}
 \begin{center}
 \begin{tabular}{ |c|c|c| }
@@ -226,14 +246,10 @@ A paper ends with a conclusion or summary section.
 \end{tabular}
 \end{center}
 
-\if0\blind{
-\section*{Acknowledgements}
-The authors acknowledge the generous support from the funding agency of XYZ.	} \fi
-
-\bibliographystyle{chicago}
-\spacingset{1}
-\bibliography{IISE-Trans}
-
-\printglossary
+% Bibliography
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{apa}
+\bibliography{sample}
+%\bibliography{IISE-Trans}
 	
 \end{document}
