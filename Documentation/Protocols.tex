@@ -64,15 +64,27 @@
 	\makeglossaries
 	\newglossaryentry{NOP} {
 		name=NOP,
-		description={No OPeration. It represents a valid operation that means 'do nothing'.}
+		description={No OPeration. It represents a valid operation that means 'do nothing'}
 	}
 	\newglossaryentry{async} {
 		name=async,
-		description={Asynchronous; returned non-sequentially.}
+		description={Asynchronous; returned non-sequentially}
 	}
 	\newglossaryentry{IEEE-754} {
 		name=IEEE 754,
 		description={IEEE Standard for Floating-Point Arithmetic (IEEE 754) is a standard for computing floating-points operations. For more details about it check \cite{IEEE-754}}
+	}
+	\newglossaryentry{multidimensional-array} {
+		name=Multidimensional array,
+		description={Array of arrays}
+	}
+	\newglossaryentry{MSB} {
+		name=Most significant bit,
+		description={The Most significant bit is the bit with the higher index number}
+	}
+	\newglossaryentry{LSB} {
+		name=Least significant bit,
+		description={The Least significant bit is the bit with the lowest index number}
 	}
 
 	
@@ -152,7 +164,7 @@ We thank you for your attention to these details.
 	\centering
 	\begin{bytefield}{32}
 		\bitheader{0,2,3,4,15,16,31} \\
-		\bitbox{3}{\hyperref[s:dst]{DST}} & \bitbox{1}{\hyperref[s:response]{r}} & \bitbox{12}{\hyperref[s:type]{type}} & \bitbox[lrt]{16}{} \\
+		\bitbox{3}{\hyperref[s:dst]{DST}} & \bitbox{1}{\hyperref[s:response]{r}} & \bitbox{12}{\hyperref[s:operation]{operation}} & \bitbox[lrt]{16}{} \\
 		\wordbox[lr]{1}{\hyperref[s:args]{arguments}} \\
 		\skippedwords \\
 		\wordbox[lrb]{1}{}
@@ -185,15 +197,17 @@ We thank you for your attention to these details.
 \subsection{Response} \label{s:response}
 Some of the petitions have return objects. Those petitions will return to the sender (TesterConnector) with the same code, but with a '1' on the Response parameter. In that case, the parameter \hyperref[s:dst]{Destiny} now means 'Origin'.
 
-Some petitions have \gls{async} "returns" (for example: \myworries{examples}). Those will be sent using petitions without return's \hyperref[s:type]{Type} (so, petitions without a mirror petition with a '1' as Response), marked as responses (Response bit at '1').
+Some petitions have \gls{async} "returns" (for example: \myworries{examples}). Those will be sent using petitions without return's \hyperref[s:operation]{operations} (so, petitions without a mirror petition with a '1' as Response), marked as responses (Response bit at '1').
 
-\subsection{Type} \label{s:type}
-The Type parameter specifies the desired request. Those change according to the \hyperref[s:dst]{Destiny}, so they will be discussed in more detail in their respective sections.
+\subsection{Operation} \label{s:operation}
+The Operation parameter specifies the desired request. Those change according to the \hyperref[s:dst]{Destiny}, so they will be discussed in more detail in their respective sections.
 
-The only exception is the all-zeroes type (0b000000000000) which represents a \gls{NOP} request. That way, if you need to perform a long test, you won't be \myworries{explain the 'kicked by inactivity' concept} kicked by inactivity if you send this request every few minutes.
+The only exception is the all-zeroes operation (0b000000000000) which represents a \gls{NOP} request. That way, if you need to perform a long test, you won't be \myworries{explain the 'kicked by inactivity' concept} kicked by inactivity if you send this request every few minutes.
+
+Also, the all-ones operation (0b111111111111) represents an \hyperref[s:extended]{Extended petition}. For more information, refer to the \hyperref[s:extended]{subsection \getrefnumber{s:extended}, Extended petitions}.
 
 \subsection{Arguments} \label{s:args}
-The Arguments parameter specifies the arguments (if any) to the \textit{\hyperref[s:type]{Type}} request. Those change according to the \hyperref[s:dst]{Destiny}, so the amount of arguments, and their types and order will be discussed in more detail in their respective sections.
+The Arguments parameter specifies the arguments (if any) to the \textit{\hyperref[s:operation]{Operation}} request. Those change according to the \hyperref[s:dst]{Destiny}, so the amount of arguments, and their types and order will be discussed in more detail in their respective sections.
 
 Now there will be discussed the most common data types, so they will be independent of any programming language.
 
@@ -203,10 +217,33 @@ Characters are sent as a 1-byte integer, representing its ASCII \myworries{ref?}
 \subsubsection{Integer}\label{type:int}
 Integers are signed 4-bytes integers.
 
+\subsubsection{Boolean}\label{type:bool}
+Booleans are 1-bit element that represents \textit{true} (0b1), or \textit{false} (0b0).
+
+For alignment \myworries{define?} reasons, booleans will be sent as 1-byte element. To avoid misunderstandings, let's define \textit{false} as 0x00, and \textit{true} as '\textit{not \myworries{define?} false}'. That way, this two packets are valid \textit{true} elements:
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{8}
+		\bitheader{0,7} \\
+		\bitbox{8}{0x01}
+	\end{bytefield}
+	\caption{True packet with the \glslink{LSB}{LSB} at 1}
+\end{figure}
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{8}
+		\bitheader{0,7} \\
+		\bitbox{8}{0xFF}
+	\end{bytefield}
+	\caption{True packet with all bits at 1}
+\end{figure}
+
 \subsubsection{Float}\label{type:float}
 Floats are 4-bytes floating-point numbers. They are represented following the \gls{IEEE-754}\footnote{This standard should be used by C, Java and Python. \myworries{cite?}}.
 
-\subsubsection{Strings}\label{type:str}
+\subsubsection{String}\label{type:str}
 Strings are \hyperref[type:array]{arrays} of \hyperref[type:char]{characters}. Refer to the respective subsections for more information.
 
 \subsubsection{Array}\label{type:array}
@@ -227,7 +264,7 @@ The structure is a 2-byte \myworries{big endian?} integer (representing the numb
 	\caption{Structure of a \hyperref[type:str]{String}}
 \end{figure}
 
-Arrays can be multidimensional \myworries{define?}, holding \textit{n} arrays of the same type. It's worth mentioning that they don't have to be arrays of the same length:
+Arrays can be \glslink{multidimensional-array}{multidimensional}, holding \textit{n} arrays of the same type. It's worth mentioning that they don't have to be arrays of the same length, as can be seen in Figure \ref{fig:multidimensional-array-example}, Example of a string array.
 \begin{figure}[h]
 	\centering
 	\begin{bytefield}{32}
@@ -239,7 +276,75 @@ Arrays can be multidimensional \myworries{define?}, holding \textit{n} arrays of
 		\bitbox{8}{!} & \bitbox{24}[bgcolor=lightgray]{next type}
 	\end{bytefield}
 	\caption{Example of a string array}
+	\label{fig:multidimensional-array-example}
 \end{figure}
+
+\section{Server petition}
+\myworries{...}
+
+\subsection{Extended petitions} \label{s:extended}
+Extended petitions are petitions added to the standard that doesn't have to be implemented.
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{\hyperref[s:response]{r}} & \bitbox{12}{0b111111111111} & \bitbox{16}{\hyperref[s:e-type]{extended type}} \\
+		\bitbox{16}{\hyperref[s:e-operation]{extended operation}} & \bitbox[ltr]{16}{} \\
+		\wordbox[lr]{1}{\hyperref[s:args]{arguments}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{Extended petition structure}
+\end{figure}
+
+\subsubsection{Extended type} \label{s:e-type}
+The type tells which kind of extended petition we're talking about.
+
+The \glslink{MSB}{MSB} \myworries{abbreviation?} tells if the Extended type is one of the standards, thus must be followed by specification, or if it's non-standard, so the petition can be whatever the user want it to be. This is useful if you want to implement a petition not followed by the standard, or if the petition only makes sense in your personal environment.
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{ |c|c|c| }
+		\hline
+		type[15] & type[14..0] & Extended type \\
+		\hline
+		0 & 0b000000000000000 & \hyperref[e:performance]{Performance operations} \\
+		0 & 0b000000000000001 & \hyperref[e:worldguard]{WorldGuard operations} \\
+		0 & 0b000000000000010 & \hyperref[e:residence]{Residence operations} \\
+		\hline
+		1 & XXXXXXXXXXXXXXX & Reserved for internal use \\
+		\hline
+	\end{tabular}
+	\caption{Extended types}
+\end{table}
+
+If you've implemented an extended type and you believe that it makes sense to be part of the standard contact \href{mailto:contacto@rogermiranda1000.com?subject=WatchWolf - New extended type}{contacto@rogermiranda1000.com} to reserve one of the addresses.
+
+\subsubsection{Extended operation} \label{s:e-operation}
+Like the parameter \hyperref[s:operation]{Operation}, it specifies the desired request. For more information, refer to the \hyperref[s:operation]{subsection \getrefnumber{s:operation}, Operation}.
+
+The only reserved operation is the all-zeroes operation (0x0000). It represents the question 'is this extended petition implemented?'. The server must response (with the \hyperref[s:response]{response bit at 1}) with \textit{true} (extended operation implemented on this machine) or \textit{false} (unknown/unimplemented extended operation), as it can be seen in Figure \ref{fig:implemented-eop}, Implemented extended operation response structure.
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{1} & \bitbox{12}{0b111111111111} & \bitbox{16}{\hyperref[s:e-type]{extended type}} \\
+		\bitbox{16}{0x0000} & \bitbox{8}{\hyperref[type:bool]{\textit{true}}} & \bitbox{8}[bgcolor=lightgray]{}
+	\end{bytefield}
+	\caption{Implemented extended operation response structure}
+	\label{fig:implemented-eop}
+\end{figure}
+
+\subsubsection{Performance operations} \label{e:performance}
+\myworries{...}
+
+\subsubsection{WorldGuard operations} \label{e:worldguard}
+\myworries{...}
+
+\subsubsection{Residence operations} \label{e:residence}
+\myworries{...}
 
 \section{Server Manager petition} \label{s:methods}
 First-level headings should be in bold.
