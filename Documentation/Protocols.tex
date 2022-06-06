@@ -40,6 +40,7 @@
 	\usepackage{bytefield} 	% network protocol
 	\usepackage{hyperref} 	% go to labels on click
 	\usepackage{chngcntr}	% count figures/tables with sections
+	\usepackage{footnote}	% notes inside tables
 	\usepackage[natbibapa]{apacite}	% bibliography
 	\usepackage[acronym,section=subsection]{glossaries}
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -52,6 +53,10 @@
 	% rename titles
 	\renewcommand{\listfigurename}{Figures}
 	\renewcommand{\listtablename}{Tables}
+	
+	% allow footnotes inside tabular
+	\makesavenoteenv{tabular}
+	\makesavenoteenv{table}
 	
 	% count figures/tables with sections
 	\counterwithin{table}{section}
@@ -170,6 +175,7 @@ We thank you for your attention to these details.
 		\wordbox[lrb]{1}{}
 	\end{bytefield}
 	\caption{Packet structure}
+	\label{fig:packet-structure}
 \end{figure}
 
 \subsection{Destiny} \label{s:dst}
@@ -203,8 +209,6 @@ Some petitions have \gls{async} "returns" (for example: \myworries{examples}). T
 The Operation parameter specifies the desired request. Those change according to the \hyperref[s:dst]{Destiny}, so they will be discussed in more detail in their respective sections.
 
 The only exception is the all-zeroes operation (0b000000000000) which represents a \gls{NOP} request. That way, if you need to perform a long test, you won't be \myworries{explain the 'kicked by inactivity' concept} kicked by inactivity if you send this request every few minutes.
-
-Also, the all-ones operation (0b111111111111) represents an \hyperref[s:extended]{Extended petition}. For more information, refer to the \hyperref[s:extended]{subsection \getrefnumber{s:extended}, Extended petitions}.
 
 \subsection{Arguments} \label{s:args}
 The Arguments parameter specifies the arguments (if any) to the \textit{\hyperref[s:operation]{Operation}} request. Those change according to the \hyperref[s:dst]{Destiny}, so the amount of arguments, and their types and order will be discussed in more detail in their respective sections.
@@ -282,38 +286,43 @@ Arrays can be \glslink{multidimensional-array}{multidimensional}, holding \texti
 \section{Server petition}
 \myworries{...}
 
-\subsection{Extended petitions} \label{s:extended}
-Extended petitions are petitions added to the standard that doesn't have to be implemented.
+The server petitions are a bit different from the rest. The server petitions are designed in a way that everyone have some common operations, and then you can add some others optionally (and even non-standard ones). We'll define this 'set of operations' as \hyperref[s:server-group]{groups}.
+
+For that reason, the operation field (defined on the Figure \ref{fig:packet-structure}, Packet structure) becomes the \hyperref[s:server-group]{group}, and then the \hyperref[s:operation]{operation} is defined on the next 2 bytes, as shown in the Figure \ref{fig:server-structure}, Server petition structure.
 
 \begin{figure}[h]
 	\centering
 	\begin{bytefield}{32}
 		\bitheader{0,2,3,4,15,16,31} \\
-		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{\hyperref[s:response]{r}} & \bitbox{12}{0b111111111111} & \bitbox{16}{\hyperref[s:e-type]{extended type}} \\
-		\bitbox{16}{\hyperref[s:e-operation]{extended operation}} & \bitbox[ltr]{16}{} \\
-		\wordbox[lr]{1}{\hyperref[s:args]{arguments}} \\
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{\hyperref[s:response]{r}} & \bitbox{12}{\hyperref[s:server-group]{group}} & \bitbox{16}{\hyperref[s:server-operation]{operation}} \\
+		\wordbox[ltr]{1}{\hyperref[s:args]{arguments}} \\
 		\skippedwords \\
 		\wordbox[lrb]{1}{}
 	\end{bytefield}
-	\caption{Extended petition structure}
+	\caption{Server petition structure}
+	\label{fig:server-structure}
 \end{figure}
 
-\subsubsection{Extended type} \label{s:e-type}
-The type tells which kind of extended petition we're talking about.
+\subsection{Server petition group} \label{s:server-group}
+The group tells which kind of petitions we're talking about.
 
-The \glslink{MSB}{MSB} \myworries{abbreviation?} tells if the Extended type is one of the standards, thus must be followed by specification, or if it's non-standard, so the petition can be whatever the user want it to be. This is useful if you want to implement a petition not followed by the standard, or if the petition only makes sense in your personal environment.
+The \glslink{MSB}{MSB} \myworries{abbreviation?} tells if the group is one of the standards, thus must be followed by specification, or if it's non-standard, so the petition can be whatever the user want it to be. This is useful if you want to implement a petition not followed by the standard, or if the petition only makes sense in your personal environment.
+
+The 0b000000000001 group represents the 'base group'. This group implements some basic operations, and must be implemented. All the others are optional.
 
 \begin{table}[h]
 	\centering
 	\begin{tabular}{ |c|c|c| }
 		\hline
-		type[15] & type[14..0] & Extended type \\
+		type[15] & type[14..4] & Extended type \\
 		\hline
-		0 & 0b000000000000000 & \hyperref[e:performance]{Performance operations} \\
-		0 & 0b000000000000001 & \hyperref[e:worldguard]{WorldGuard operations} \\
-		0 & 0b000000000000010 & \hyperref[e:residence]{Residence operations} \\
+		0 & 0b00000000000 & NOP\footnote{As stated on the  \hyperref[s:operation]{subsection \getrefnumber{s:operation}, Operation}, the all-zeroes operation represents a NOP request.} \\
+		0 & 0b00000000001 & \hyperref[g:base]{Base operations} \\
+		0 & 0b00000000010 & \hyperref[g:performance]{Performance operations} \\
+		0 & 0b00000000011 & \hyperref[g:worldguard]{WorldGuard operations} \\
+		0 & 0b00000000100 & \hyperref[g:residence]{Residence operations} \\
 		\hline
-		1 & XXXXXXXXXXXXXXX & Reserved for internal use \\
+		1 &   XXXXXXXXXXX & Reserved for internal use \\
 		\hline
 	\end{tabular}
 	\caption{Extended types}
@@ -321,29 +330,34 @@ The \glslink{MSB}{MSB} \myworries{abbreviation?} tells if the Extended type is o
 
 If you've implemented an extended type and you believe that it makes sense to be part of the standard contact \href{mailto:contacto@rogermiranda1000.com?subject=WatchWolf - New extended type}{contacto@rogermiranda1000.com} to reserve one of the addresses.
 
-\subsubsection{Extended operation} \label{s:e-operation}
+\subsection{Server petition operation} \label{s:server-operation}
 Like the parameter \hyperref[s:operation]{Operation}, it specifies the desired request. For more information, refer to the \hyperref[s:operation]{subsection \getrefnumber{s:operation}, Operation}.
 
-The only reserved operation is the all-zeroes operation (0x0000). It represents the question 'is this extended petition implemented?'. The server must response (with the \hyperref[s:response]{response bit at 1}) with \textit{true} (extended operation implemented on this machine) or \textit{false} (unknown/unimplemented extended operation), as it can be seen in Figure \ref{fig:implemented-eop}, Implemented extended operation response structure.
+The only reserved operation is the all-zeroes operation (0x0000). It represents the question 'is this extended petition implemented?'. The server must response (with the \hyperref[s:response]{response bit at 1}) with \textit{true} (group implemented on this machine) or \textit{false} (unknown/unimplemented group), as it can be seen in Figure \ref{fig:implemented-eop}, Implemented group response structure.
 
 \begin{figure}[h]
 	\centering
 	\begin{bytefield}{32}
 		\bitheader{0,2,3,4,15,16,31} \\
-		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{1} & \bitbox{12}{0b111111111111} & \bitbox{16}{\hyperref[s:e-type]{extended type}} \\
-		\bitbox{16}{0x0000} & \bitbox{8}{\hyperref[type:bool]{\textit{true}}} & \bitbox{8}[bgcolor=lightgray]{}
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{1} & \bitbox{12}{\hyperref[s:server-group]{group}} & \bitbox{16}{0x0000} \\
+		\bitbox{8}{\hyperref[type:bool]{\textit{true}}} & \bitbox{24}[bgcolor=lightgray]{}
 	\end{bytefield}
-	\caption{Implemented extended operation response structure}
+	\caption{Implemented group response structure}
 	\label{fig:implemented-eop}
 \end{figure}
 
-\subsubsection{Performance operations} \label{e:performance}
+\subsection{Base operations} \label{g:base}
 \myworries{...}
 
-\subsubsection{WorldGuard operations} \label{e:worldguard}
+\myworries{'is implemented' (all zeroes) optional}
+
+\subsection{Performance operations} \label{g:performance}
 \myworries{...}
 
-\subsubsection{Residence operations} \label{e:residence}
+\subsection{WorldGuard operations} \label{g:worldguard}
+\myworries{...}
+
+\subsection{Residence operations} \label{g:residence}
 \myworries{...}
 
 \section{Server Manager petition} \label{s:methods}
