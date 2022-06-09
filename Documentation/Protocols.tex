@@ -57,6 +57,7 @@
 	% allow footnotes inside tabular
 	\makesavenoteenv{tabular}
 	\makesavenoteenv{table}
+	\makesavenoteenv{figure}
 	
 	% count figures/tables with sections
 	\counterwithin{table}{section}
@@ -283,7 +284,86 @@ Arrays can be \glslink{multidimensional-array}{multidimensional}, holding \texti
 	\label{fig:multidimensional-array-example}
 \end{figure}
 
-\section{Server petition}
+\subsubsection{Map}\label{type:map}
+\myworries{...}
+
+\section{Server manager petition}
+\myworries{...}
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{0}} & \bitbox{12}{\hyperref[s:operation]{0b000000000001}} & \bitbox[lrt]{16}{} \\
+		\wordbox[lr]{1}{\hyperref[s:args]{arguments}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{Server manager petition structure}
+\end{figure}
+
+\myworries{Table of operations}
+
+\subsection{Server manager operations}
+\myworries{...}
+
+You don't have to implement the NOP operation in this destiny block because the timeout happens inside the \hyperref[s:server-petition]{Server petition block}. That is, if you don't call operations (or send NOPs) to the \hyperref[s:server-petition]{Server petition} for a long time, the server will stop, and because the server stopped the Server manager will close the established connection.
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{1}} & \bitbox{12}{\hyperref[s:operation]{0b000000000001}} & \bitbox[lrt]{16}{} \\
+		\wordbox[lr]{1}{\hyperref[s:args]{arguments}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{Server manager petition structure}
+\end{figure}
+
+\subsubsection{Start server}
+\myworries{...}
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{r}} & \bitbox{12}{\hyperref[s:operation]{operation}} & \bitbox[lrt]{16}{} \\
+		\wordbox[lr]{1}{Map[]\footnote{Array of maps (worlds). To have more information check the \hyperref[type:array]{subsection \ref{type:array}, Array}, and \hyperref[type:map]{subsection \ref{type:map}, Map}.}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{Start server petition structure}
+\end{figure}
+
+Once a 'start server' request is received the program should create a server with the specified arguments, and return its IP+Port (for example, '127.0.0.1:25565', a 15-characters string; see \hyperref[fig:start-response-structure]{Figure \ref{fig:start-response-structure}, Start server response structure}).
+
+If it's not possible to create it (for example: one argument is invalid, the user sent a plugin when it's specified that only Usual Plugins are allowed \myworries{explain}, or there's no free servers of that type), then an empty IP is returned (see \hyperref[fig:start-error-response-structure]{Figure \ref{fig:start-error-response-structure}, Start server error response structure}).
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{1}} & \bitbox{12}{\hyperref[s:operation]{0b000000000001}} & \bitbox[lrt]{16}{} \\
+		\wordbox[lr]{1}{\hyperref[type:str]{IP:port}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{Start server response structure}
+	\label{fig:start-response-structure}
+\end{figure}
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{1} & \bitbox{12}{\hyperref[s:operation]{0b000000000001}} & \bitbox{16}{0x0000\footnote{Being the argument an array, the first 2 bytes specifies its size. As we must return an empty array, the argument should be exactly 16 zeroes.}}
+	\end{bytefield}
+	\caption{Start server error response structure}
+	\label{fig:start-error-response-structure}
+\end{figure}
+
+\section{Server petition} \label{s:server-petition}
 \myworries{...}
 
 The server petitions are a bit different from the rest. The server petitions are designed in a way that everyone have some common operations, and then you can add some others optionally (and even non-standard ones). We'll define this 'set of operations' as \hyperref[s:server-group]{groups}.
@@ -339,7 +419,7 @@ The only reserved operation is the all-zeroes operation (0x0000). It represents 
 	\centering
 	\begin{bytefield}{32}
 		\bitheader{0,2,3,4,15,16,31} \\
-		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{1} & \bitbox{12}{\hyperref[s:server-group]{group}} & \bitbox{16}{0x0000} \\
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{1} & \bitbox{12}{\hyperref[s:server-group]{group\footnote{except for groups 0b000000000000 and 0b000000000001}}} & \bitbox{16}{0x0000} \\
 		\bitbox{8}{\hyperref[type:bool]{\textit{true}}} & \bitbox{24}[bgcolor=lightgray]{}
 	\end{bytefield}
 	\caption{Implemented group response structure}
