@@ -68,30 +68,8 @@
 	
 	% acronyms
 	\makeglossaries
-	\newglossaryentry{NOP} {
-		name=NOP,
-		description={No OPeration. It represents a valid operation that means 'do nothing'}
-	}
-	\newglossaryentry{async} {
-		name=async,
-		description={Asynchronous; returned non-sequentially}
-	}
-	\newglossaryentry{IEEE-754} {
-		name=IEEE 754,
-		description={IEEE Standard for Floating-Point Arithmetic (IEEE 754) is a standard for computing floating-points operations. For more details about it check \cite{IEEE-754}}
-	}
-	\newglossaryentry{multidimensional-array} {
-		name=Multidimensional array,
-		description={Array of arrays}
-	}
-	\newglossaryentry{MSB} {
-		name=Most significant bit,
-		description={The Most significant bit is the bit with the higher index number}
-	}
-	\newglossaryentry{LSB} {
-		name=Least significant bit,
-		description={The Least significant bit is the bit with the lowest index number}
-	}
+	\loadglsentries{glossaries}
+	
 
 	
 	%%%%% Author package list and commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -284,8 +262,13 @@ Arrays can be \glslink{multidimensional-array}{multidimensional}, holding \texti
 	\label{fig:multidimensional-array-example}
 \end{figure}
 
-\subsubsection{Map}\label{type:map}
+\subsubsection{File}\label{type:file}
 \myworries{...}
+
+\subsubsection{Server type}\label{type:server-type}
+The Server type specifies the Minecraft server.
+
+As a standard, we only support Spigot (\cite{spigot-mc}) and Paper (\cite{paper-mc}), but for major compatibility this parameter is a \hyperref[type:str]{String} specifying the server type.
 
 \section{Server manager petition}
 \myworries{...}
@@ -294,7 +277,7 @@ Arrays can be \glslink{multidimensional-array}{multidimensional}, holding \texti
 	\centering
 	\begin{bytefield}{32}
 		\bitheader{0,2,3,4,15,16,31} \\
-		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{0}} & \bitbox{12}{\hyperref[s:operation]{0b000000000001}} & \bitbox[lrt]{16}{} \\
+		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{r}} & \bitbox{12}{\hyperref[s:operation]{operation}} & \bitbox[lrt]{16}{} \\
 		\wordbox[lr]{1}{\hyperref[s:args]{arguments}} \\
 		\skippedwords \\
 		\wordbox[lrb]{1}{}
@@ -304,37 +287,38 @@ Arrays can be \glslink{multidimensional-array}{multidimensional}, holding \texti
 
 \myworries{Table of operations}
 
-\subsection{Server manager operations}
-\myworries{...}
-
 You don't have to implement the NOP operation in this destiny block because the timeout happens inside the \hyperref[s:server-petition]{Server petition block}. That is, if you don't call operations (or send NOPs) to the \hyperref[s:server-petition]{Server petition} for a long time, the server will stop, and because the server stopped the Server manager will close the established connection.
 
-\begin{figure}[h]
-	\centering
-	\begin{bytefield}{32}
-		\bitheader{0,2,3,4,15,16,31} \\
-		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{1}} & \bitbox{12}{\hyperref[s:operation]{0b000000000001}} & \bitbox[lrt]{16}{} \\
-		\wordbox[lr]{1}{\hyperref[s:args]{arguments}} \\
-		\skippedwords \\
-		\wordbox[lrb]{1}{}
-	\end{bytefield}
-	\caption{Server manager petition structure}
-\end{figure}
-
-\subsubsection{Start server}
+\subsection{Start server operation}
 \myworries{...}
 
+\newpage
+\vfill
 \begin{figure}[h]
 	\centering
 	\begin{bytefield}{32}
 		\bitheader{0,2,3,4,15,16,31} \\
-		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{r}} & \bitbox{12}{\hyperref[s:operation]{operation}} & \bitbox[lrt]{16}{} \\
-		\wordbox[lr]{1}{Map[]\footnote{Array of maps (worlds). To have more information check the \hyperref[type:array]{subsection \ref{type:array}, Array}, and \hyperref[type:map]{subsection \ref{type:map}, Map}.}} \\
+		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{0}} & \bitbox{12}{\hyperref[s:operation]{0b000000000001}} & \bitbox[lrt]{16}{} \\
+		\wordbox[lr]{1}{\hyperref[type:maps]{maps}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{} \\
+		\wordbox[ltr]{1}{\hyperref[type:plugins]{plugins}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{} \\
+		\wordbox[ltr]{1}{\hyperref[type:server-type]{server type}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{} \\
+		\wordbox[ltr]{1}{\hyperref[s:server-version]{server version}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{} \\
+		\wordbox[ltr]{1}{\hyperref[type:config-files]{config files}} \\
 		\skippedwords \\
 		\wordbox[lrb]{1}{}
 	\end{bytefield}
 	\caption{Start server petition structure}
 \end{figure}
+\vfill
+\clearpage
 
 Once a 'start server' request is received the program should create a server with the specified arguments, and return its IP+Port (for example, '127.0.0.1:25565', a 15-characters string; see \hyperref[fig:start-response-structure]{Figure \ref{fig:start-response-structure}, Start server response structure}).
 
@@ -362,6 +346,50 @@ If it's not possible to create it (for example: one argument is invalid, the use
 	\caption{Start server error response structure}
 	\label{fig:start-error-response-structure}
 \end{figure}
+
+\subsubsection{Maps}\label{type:maps}
+Array of maps (worlds; Map[]). To have more information about arrays check the \hyperref[type:array]{subsection \ref{type:array}, Array}.
+
+About the Map type, Minecraft is divided on different worlds (\cite{minecraft-world}). By default there's only three, but with some plugins this number can increase.
+
+In order to properly test some plugins, there may be needed some kind of known place. To avoid overusing the Set block operation \myworries{link} you can send using this argument your(s) world(s).
+
+\myworries{Map in more detail}
+
+\subsubsection{Plugins}\label{type:plugins}
+Array of plugins (Plugin[]). To have more information check the \hyperref[type:array]{subsection \ref{type:array}, Array}.
+
+About the Plugin type, there's three types of plugins:
+\begin{enumerate}
+	\item Usual plugins
+	
+		The Usual plugins are plugins that you expect everyone to have for being extremely common, like WorldGuard (\cite{worldguard}), or to allow the user to test plugins with Premium plugins\footnote{Premium plugins are paid plugins. For that reason, only the purchaser can download them (so you can't send a link to the plugin), and sending them through the internet via file upload may not be legal, so the plugin must be already downloaded in the machine.} dependencies. This allows both security and performance.
+
+		Something to highlight is the fact that, as mentioned in the operation Allows non usual plugins \myworries{reference}, some ServerManager will only allow plugins that are already in the machine.
+	
+		\myworries{structure?}
+	
+	\item Uploaded plugins
+		
+		The Uploaded plugins are plugins available in some website, thus can be sent through an URL.
+		
+		\myworries{structure?}
+		
+	\item File plugins
+		
+		File plugins are plugins that are non-usual and aren't uploaded in any website, so they must be sent as a file.
+		
+		\myworries{structure?}
+		
+\end{enumerate}
+
+
+
+\subsubsection{Server version}\label{s:server-version}
+\hyperref[type:str]{String} specifying the \hyperref[type:server-type]{server type}'s version. For example, '1.12.2'.
+
+\subsubsection{Config files}\label{type:config-files}
+\myworries{...}
 
 \section{Server petition} \label{s:server-petition}
 \myworries{...}
