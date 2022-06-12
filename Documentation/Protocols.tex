@@ -232,7 +232,7 @@ Strings are \hyperref[type:array]{arrays} of \hyperref[type:char]{characters}. R
 \subsubsection{Array}\label{type:array}
 Arrays are a set of \textit{n} elements of the same type.
 
-The structure is a 2-byte \myworries{big endian?} integer (representing the number of elements, \textit{n}), followed by \textit{n} elements of the same type. As a note here, by representing the size with a 2-byte integer the maximum number of elements per array is 65,535.
+The structure is a 2-byte \myworries{first (0..7) MSB, then (8..15) LSB} integer (representing the number of elements, \textit{n}), followed by \textit{n} elements of the same type. As a note here, by representing the size with a 2-byte integer the maximum number of elements per array is 65,535.
 
 \begin{figure}[h]
 	\centering
@@ -263,7 +263,27 @@ Arrays can be \glslink{multidimensional-array}{multidimensional}, holding \texti
 \end{figure}
 
 \subsubsection{File}\label{type:file}
-\myworries{...}
+Similar to the \hyperref[type:array]{Array}, a File is a name (\hyperref[type:str]{String}), followed by a group of bytes.
+
+The problem here is that if we stick with the \hyperref[type:array]{Array} structure, the maximum size of a file will be around 8kB. To solve this, the File structure implements some kind of 'extended array', that extends the 'size' parameter to 32 bits. That way, the file size restriction by protocol definition\footnote{Besides defining here what's allowed, remember that this packet will be inside a TCP payload \myworries{definition?}. This means that the maximum file size will be probably redefined by the machine's TCP firewalls.} is 4GB.
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,31} \\
+		\wordbox[ltr]{1}{\hyperref[type:str]{file name}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{} \\
+		\wordbox[ltr]{1}{\hyperref[type:str]{file path\footnote{The path must be relative, and you can't go outside the Server directory (using '../'). Both '' and './' means the root of the Server directory.}}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{} \\
+		\bitbox{32}{file number of bytes} \\
+		\wordbox[ltr]{1}{file contents} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{File structure}
+\end{figure}
 
 \subsubsection{Server type}\label{type:server-type}
 The Server type specifies the Minecraft server.
@@ -289,7 +309,7 @@ As a standard, we only support Spigot (\cite{spigot-mc}) and Paper (\cite{paper-
 
 You don't have to implement the NOP operation in this destiny block because the timeout happens inside the \hyperref[s:server-petition]{Server petition block}. That is, if you don't call operations (or send NOPs) to the \hyperref[s:server-petition]{Server petition} for a long time, the server will stop, and because the server stopped the Server manager will close the established connection.
 
-\subsection{Start server operation}
+\subsection{Start server operation}\label{s:server-manager-start}
 \myworries{...}
 
 \newpage
@@ -320,7 +340,7 @@ You don't have to implement the NOP operation in this destiny block because the 
 \vfill
 \clearpage
 
-Once a 'start server' request is received the program should create a server with the specified arguments, and return its IP+Port (for example, '127.0.0.1:25565', a 15-characters string; see \hyperref[fig:start-response-structure]{Figure \ref{fig:start-response-structure}, Start server response structure}).
+Once a 'start server' request is received the program should create a server with the specified arguments, and return its IP:Port (for example, '127.0.0.1:25565', a 15-characters string; see \hyperref[fig:start-response-structure]{Figure \ref{fig:start-response-structure}, Start server response structure}). The IP to send the \hyperref[s:server-petition]{Server Petitions} is the same, but the next port (IP:$<$port+1$>$).
 
 If it's not possible to create it (for example: one argument is invalid, the user sent a plugin when it's specified that only Usual Plugins are allowed \myworries{explain}, or there's no free servers of that type), then an empty IP is returned (see \hyperref[fig:start-error-response-structure]{Figure \ref{fig:start-error-response-structure}, Start server error response structure}).
 
@@ -379,11 +399,24 @@ About the Plugin type, there's three types of plugins:
 		
 		File plugins are plugins that are non-usual and aren't uploaded in any website, so they must be sent as a file.
 		
-		\myworries{structure?}
+		As can be seen in the \hyperref[fig:file-plugin-structure]{Figure \ref{fig:file-plugin-structure}, File plugin structure}, the first argument (that specifies the Plugin type) is 0x02.
+		
+		\begin{figure}[h]
+			\centering
+			\begin{bytefield}{32}
+				\bitheader{0,7,8,31} \\
+				\bitbox{8}{0x02} & \bitbox[ltr]{24}{} \\
+				\wordbox[lr]{1}{\hyperref[type:file]{file}} \\
+				\skippedwords \\
+				\wordbox[lrb]{1}{}
+			\end{bytefield}
+			\caption{File plugin structure}
+			\label{fig:file-plugin-structure}
+		\end{figure}
 		
 \end{enumerate}
 
-
+\myworries{mixed plugin types example?}
 
 \subsubsection{Server version}\label{s:server-version}
 \hyperref[type:str]{String} specifying the \hyperref[type:server-type]{server type}'s version. For example, '1.12.2'.
@@ -396,7 +429,7 @@ About the Plugin type, there's three types of plugins:
 
 The server petitions are a bit different from the rest. The server petitions are designed in a way that everyone have some common operations, and then you can add some others optionally (and even non-standard ones). We'll define this 'set of operations' as \hyperref[s:server-group]{groups}.
 
-For that reason, the operation field (defined on the Figure \ref{fig:packet-structure}, Packet structure) becomes the \hyperref[s:server-group]{group}, and then the \hyperref[s:operation]{operation} is defined on the next 2 bytes, as shown in the Figure \ref{fig:server-structure}, Server petition structure.
+For that reason, the operation field (defined on the Figure \ref{fig:packet-structure}, Packet structure) becomes the \hyperref[s:server-group]{group}, and then the \hyperref[s:operation]{operation} is defined on the next 2 bytes, as shown in the \hyperref[fig:server-structure]{Figure \ref{fig:server-structure}, Server petition structure}.
 
 \begin{figure}[h]
 	\centering
@@ -459,6 +492,74 @@ The only reserved operation is the all-zeroes operation (0x0000). It represents 
 
 \myworries{'is implemented' (all zeroes) optional}
 
+\subsubsection{Server stop operation}
+\myworries{...}
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{\hyperref[s:response]{0}} & \bitbox{12}{\hyperref[g:base]{0b000000000001}} & \bitbox{16}{\hyperref[s:server-operation]{0x0001}}
+	\end{bytefield}
+	\caption{Stop server operation structure}
+\end{figure}
+
+\subsubsection{Server stopped notification}
+\myworries{... response to...}
+
+To have more information about the \textit{server id} parameter check the \hyperref[s:server-started]{Subsection \ref{s:server-started}, Server started notification}.
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{\hyperref[s:response]{1}} & \bitbox{12}{\hyperref[g:base]{0b000000000001}} & \bitbox{16}{\hyperref[s:server-operation]{0x0001}} \\
+		\wordbox[ltr]{1}{\hyperref[type:str]{server id}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{Server stopped response structure}
+\end{figure}
+
+\subsubsection{Server started notification}\label{s:server-started}
+
+This notification is sent to the Server Manager \myworries{ref?}, as a response for the \hyperref[s:server-manager-start]{Start server operation}, thus not really a response of a Server's operation.
+
+As one IP can have multiple servers, a \hyperref[type:str]{string} that identifies the server must be sent with the response. This argument can be whatever you want (for example, $<$server ip$>$:$<$server port$>$ will be unique), but must be shared between both the Server Manager and the Server. For security reasons \myworries{cite IP spoofing or similar} (because the Tester \myworries{ref?} also knows the server's IP and port) a hash function is encouraged to be used.
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{\hyperref[s:response]{1}} & \bitbox{12}{\hyperref[g:base]{0b000000000001}} & \bitbox{16}{\hyperref[s:server-operation]{0x0002}} \\
+		\wordbox[ltr]{1}{\hyperref[type:str]{server id}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{Server started response structure}
+\end{figure}
+
+\subsubsection{Whitelist player operation}
+\myworries{...}
+
+\subsubsection{OP player operation}
+\myworries{...}
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{\hyperref[s:response]{0}} & \bitbox{12}{\hyperref[g:base]{0b000000000001}} & \bitbox{16}{\hyperref[s:server-operation]{0x0004}} \\
+		\wordbox[ltr]{1}{\hyperref[type:str]{username}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{OP player operation structure}
+\end{figure}
+
+\subsubsection{Error notification}
+\myworries{...}
+
 \subsection{Performance operations} \label{g:performance}
 \myworries{...}
 
@@ -468,7 +569,7 @@ The only reserved operation is the all-zeroes operation (0x0000). It represents 
 \subsection{Residence operations} \label{g:residence}
 \myworries{...}
 
-\section{Server Manager petition} \label{s:methods}
+\section{? petition} \label{s:methods}
 First-level headings should be in bold.
 
 \subsection{
