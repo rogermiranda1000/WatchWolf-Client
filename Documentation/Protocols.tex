@@ -319,16 +319,16 @@ You don't have to implement the NOP operation in this destiny block because the 
 	\begin{bytefield}{32}
 		\bitheader{0,2,3,4,15,16,31} \\
 		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{0}} & \bitbox{12}{\hyperref[s:operation]{0b000000000001}} & \bitbox[lrt]{16}{} \\
-		\wordbox[lr]{1}{\hyperref[type:maps]{maps}} \\
+		\wordbox[ltr]{1}{\hyperref[type:server-type]{server type}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{} \\
+		\wordbox[ltr]{1}{\hyperref[s:server-version]{server version}} \\
 		\skippedwords \\
 		\wordbox[lrb]{1}{} \\
 		\wordbox[ltr]{1}{\hyperref[type:plugins]{plugins}} \\
 		\skippedwords \\
 		\wordbox[lrb]{1}{} \\
-		\wordbox[ltr]{1}{\hyperref[type:server-type]{server type}} \\
-		\skippedwords \\
-		\wordbox[lrb]{1}{} \\
-		\wordbox[ltr]{1}{\hyperref[s:server-version]{server version}} \\
+		\wordbox[lr]{1}{\hyperref[type:maps]{maps}} \\
 		\skippedwords \\
 		\wordbox[lrb]{1}{} \\
 		\wordbox[ltr]{1}{\hyperref[type:config-files]{config files}} \\
@@ -387,7 +387,25 @@ About the Plugin type, there's three types of plugins:
 
 		Something to highlight is the fact that, as mentioned in the operation Allows non usual plugins \myworries{reference}, some ServerManager will only allow plugins that are already in the machine.
 	
-		\myworries{structure?}
+		As can be seen in the \hyperref[fig:usual-plugin-structure]{Figure \ref{fig:usual-plugin-structure}, Usual plugin structure}, the first argument (that specifies the Plugin type) is 0x00.
+		
+		The plugin version is optional, and can't be specified in the parameter \textit{name}. If no version is provided (an empty string) then the Server Manager will pick the plugin with the highest version that is compatible with the desired server version.
+		
+		\begin{figure}[h]
+			\centering
+			\begin{bytefield}{32}
+				\bitheader{0,7,8,31} \\
+				\bitbox{8}{0x00} & \bitbox[ltr]{24}{} \\
+				\wordbox[lr]{1}{\hyperref[type:str]{name}} \\
+				\skippedwords \\
+				\wordbox[lrb]{1}{} \\
+				\wordbox[lr]{1}{\hyperref[type:str]{version}} \\
+				\skippedwords \\
+				\wordbox[lrb]{1}{}
+			\end{bytefield}
+			\caption{Usual plugin structure}
+			\label{fig:usual-plugin-structure}
+		\end{figure}
 	
 	\item Uploaded plugins
 		
@@ -423,6 +441,36 @@ About the Plugin type, there's three types of plugins:
 
 \subsubsection{Config files}\label{type:config-files}
 \myworries{...}
+
+\subsection{Server started notification}
+
+After a \hyperref[s:server-manager-start]{Start server operation} the server will start. Due to the unpredictable amount of time that the server takes to start up you'll receive a Server started notification once the server socket is available.
+
+You may notice that there's another \hyperref[s:server-started]{Server started notification} under the \hyperref[s:s:server-petition]{Server petition section}. That notification goes to the ServerManager \myworries{ref?}, while this goes to the Tester \myworries{ref?}. Also, the Server one have a token that is only shared between Server and the ServerManager, and the Tester doesn't have to know it too.
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{16}
+		\bitheader{0,2,3,4,15} \\
+		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{1}} & \bitbox{12}{\hyperref[g:base]{0b000000000010}}
+	\end{bytefield}
+	\caption{Server started notification structure}
+\end{figure}
+
+\subsection{Error notification}
+\myworries{...}
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b000}} & \bitbox{1}{\hyperref[s:response]{1}} & \bitbox{12}{\hyperref[g:base]{0b000000000011}} &  \bitbox[ltr]{16}{} \\
+		\wordbox[lr]{1}{\hyperref[type:str]{error}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{Error notification structure}
+\end{figure}
 
 \section{Server petition} \label{s:server-petition}
 \myworries{...}
@@ -541,6 +589,18 @@ As one IP can have multiple servers, a \hyperref[type:str]{string} that identifi
 
 \subsubsection{Whitelist player operation}
 \myworries{...}
+
+\begin{figure}[h]
+	\centering
+	\begin{bytefield}{32}
+		\bitheader{0,2,3,4,15,16,31} \\
+		\bitbox{3}{\hyperref[s:dst]{0b001}} & \bitbox{1}{\hyperref[s:response]{0}} & \bitbox{12}{\hyperref[g:base]{0b000000000001}} & \bitbox{16}{\hyperref[s:server-operation]{0x0003}} \\
+		\wordbox[ltr]{1}{\hyperref[type:str]{username}} \\
+		\skippedwords \\
+		\wordbox[lrb]{1}{}
+	\end{bytefield}
+	\caption{Whitelist player operation structure}
+\end{figure}
 
 \subsubsection{OP player operation}
 \myworries{...}
