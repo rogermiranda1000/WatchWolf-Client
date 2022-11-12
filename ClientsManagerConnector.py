@@ -24,3 +24,5 @@ class ClientsManagerConnector:
 	def _client_manager(self, socket):
 		print(socket)
 		print(ConnectorHelper.readShort(socket))
+		print(ConnectorHelper.readString(socket)) # user
+		print(ConnectorHelper.readString(socket)) # ip

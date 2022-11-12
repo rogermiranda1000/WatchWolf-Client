@@ -4,7 +4,9 @@
 class ConnectorHelper:
 	@staticmethod
 	def readString(socket) -> str:
-		return ""
+		size = ConnectorHelper.readShort(socket)
+		data = socket.recv(size)
+		return ''.join([chr(e) for e in data])
 	
 	@staticmethod
 	def sendString(socket, data: str):
@@ -12,6 +14,6 @@ class ConnectorHelper:
 	
 	@staticmethod
 	def readShort(socket) -> int:
-		lsb = int(socket.recv(1))
-		msb = int(socket.recv(1))
+		lsb = int(socket.recv(1)[0])
+		msb = int(socket.recv(1)[0])
 		return (msb<<8) | lsb
