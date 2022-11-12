@@ -12,7 +12,7 @@ class ClientsManager(ClientsManagerPetition):
 		self._connector.run()
 	
 	def start_client(self, username: str, server_ip: str) -> str:
-		return "" # TODO
+		return "127.0.0.1:7001" # TODO
 
 if __name__ == '__main__':
 	ClientsManager().run()
