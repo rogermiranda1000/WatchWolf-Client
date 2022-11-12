@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import socket
 from threading import Thread
+from ClientsManagerPetition import ClientsManagerPetition
+from ConnectorHelper import ConnectorHelper
 
 class ClientsManagerConnector:
-	def __init__(self, ClientsManagerPetition petition_handler):
+	def __init__(self, petition_handler: ClientsManagerPetition):
 		self._petition_handler = petition_handler
 	
 	def run(self):
@@ -14,7 +17,7 @@ class ClientsManagerConnector:
 		
 		while True:
 			# accept connections from outside
-			(client_socket, address) = serversocket.accept() # TODO send address to the Client so it only replies to that one
+			(client_socket, address) = self.socket.accept() # TODO send address to the Client so it only replies to that one
 			
 			Thread(target = _client_manager, args = (self, clientsocket)).start()
 	

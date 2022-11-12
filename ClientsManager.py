@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from ClientsManagerPetition import ClientsManagerPetition
+from ClientsManagerConnector import ClientsManagerConnector
+
 class ClientsManager(ClientsManagerPetition):
 	def __init__(self):
 		self._connector = ClientsManagerConnector(self)

@@ -1,7 +1,2 @@
-deps/*
+__pycache__/*
 
-build/*
-bin/*
-lib/*
-
-login.txt
