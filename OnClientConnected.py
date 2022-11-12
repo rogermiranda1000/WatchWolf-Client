@@ -3,6 +3,6 @@
 
 from MinecraftClient import MinecraftClient
 
-class OnClientDisconnected:
-	def client_disconnected(self, client: MinecraftClient):
+class OnClientConnected:
+	def client_connected(self, client: MinecraftClient):
 		pass
