@@ -12,6 +12,6 @@ class ConnectorHelper:
 	
 	@staticmethod
 	def readShort(socket) -> int:
-		lsb = socket.recv(1)
-		msb = socket.recv(1)
+		lsb = int(socket.recv(1))
+		msb = int(socket.recv(1))
 		return (msb<<8) | lsb

@@ -19,7 +19,7 @@ class ClientsManagerConnector:
 			# accept connections from outside
 			(client_socket, address) = self.socket.accept() # TODO send address to the Client so it only replies to that one
 			
-			Thread(target = _client_manager, args = (self, clientsocket)).start()
+			Thread(target = self._client_manager, args = (client_socket,)).start()
 	
 	def _client_manager(self, socket):
 		print(socket)
