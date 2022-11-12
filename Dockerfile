@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM nikolaik/python-nodejs
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
@@ -7,6 +7,6 @@ RUN pip3 install -r requirements.txt
 
 COPY . .
 
-EXPOSE 7000
+EXPOSE 7000-7100
 
 CMD [ "python3", "ClientsManager.py"]
