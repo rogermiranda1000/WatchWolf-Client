@@ -7,12 +7,13 @@ from ClientsManagerPetition import ClientsManagerPetition
 from ConnectorHelper import ConnectorHelper
 
 class ClientsManagerConnector:
-	def __init__(self, petition_handler: ClientsManagerPetition):
+	def __init__(self, petition_handler: ClientsManagerPetition, port: int = 7000):
 		self._petition_handler = petition_handler
+		self._port = port
 	
 	def run(self):
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.bind((socket.gethostname(), 7000))
+		self.socket.bind((socket.gethostname(), self._port))
 		self.socket.listen(5)
 		
 		while True:
