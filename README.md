@@ -7,4 +7,4 @@ A Python library to test Minecraft Plugins in the client side.
 - Build the image: `docker build --tag clients-manager .`
 
 ## Launch
-- Run the docker container: `sudo docker run -i --rm --name ClientsManager -p 7000-7100:7000-7100 clients-manager:latest`
+- Run the docker container: `sudo docker run -i --rm --name ClientsManager -p 7000-7199:7000-7199 clients-manager:latest`

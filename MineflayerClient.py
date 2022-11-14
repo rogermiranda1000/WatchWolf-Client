@@ -33,23 +33,28 @@ class MineflayerClient(MinecraftClient):
 		self._bot = mineflayer.createBot({
 			"host": host,
 			"port": port,
-			"username": username
+			"username": username,
+			"verbose": True
 		})
 		
 		@On(self._bot, "login")
 		def login(this):
-			this._thread_lock.acquire()
-			if this._timedout != None:
+			self._thread_lock.acquire()
+			if self._timedout != None:
 				# too late
 				this._thread_lock.release()
 				return
-			this._timedout = False
-			this._thread_lock.release()
+			self._timedout = False
+			self._thread_lock.release()
 			
-			print(this._username + " connected to the server (" + this.server + ")")
+			print(self._username + " connected to the server (" + self.server + ")")
 			
-			if this._client_connected_listener != None:
-				this._client_connected_listener.client_connected(this)
+			if self._client_connected_listener != None:
+				self._client_connected_listener.client_connected(self)
+			
+		@On(self._bot, "end")
+		def end(*args):
+			print("Bot ended!", args)
 	
 	def _login_timeout(self):
 		if self._client_connected_listener != None:
