@@ -5,6 +5,8 @@ class ConnectorHelper:
 	@staticmethod
 	def readString(socket) -> str:
 		size = ConnectorHelper.readShort(socket)
+		if size == 0:
+			return ""
 		data = socket.recv(size)
 		return ''.join([chr(e) for e in data])
 	
@@ -12,7 +14,8 @@ class ConnectorHelper:
 	def sendString(socket, data: str):
 		size = min(len(data), 65535) # 2 bytes for the size
 		ConnectorHelper.sendShort(socket, size)
-		socket.sendall(b''.join([bytes([ord(e)]) for e in data[:size]])) # convert the string characters (from 0 to size-1) into an array of bytes
+		if size > 0:
+			socket.sendall(b''.join([bytes([ord(e)]) for e in data[:size]])) # convert the string characters (from 0 to size-1) into an array of bytes
 	
 	@staticmethod
 	def readShort(socket) -> int:

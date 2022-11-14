@@ -23,18 +23,20 @@ class ClientsManagerConnector:
 			Thread(target = self._client_manager, args = (client_socket,)).start()
 	
 	def _client_manager(self, socket):
-		msg = ConnectorHelper.readShort(socket)
-		if msg == 0b000000000001_0_010:
-			# start client petition
-			username = ConnectorHelper.readString(socket)
-			ip = ConnectorHelper.readString(socket)
-			
-			print("Starting client " + username + " into " + ip + "...")
-			user_ip = self._petition_handler.start_client(username, ip)
-			print("Client started at " + user_ip)
-			
-			# send response
-			ConnectorHelper.sendShort(socket, 0b000000000001_1_010)
-			ConnectorHelper.sendString(socket, user_ip)
-		else:
-			print("Unknown request: " + str(msg))
+		while True:
+			msg = ConnectorHelper.readShort(socket)
+			if msg == 0b000000000001_0_010:
+				# start client petition
+				username = ConnectorHelper.readString(socket)
+				ip = ConnectorHelper.readString(socket)
+				
+				print("Starting client " + username + " into " + ip + "...")
+				user_ip = self._petition_handler.start_client(username, ip)
+				if user_ip != "":
+					print("Client started at " + user_ip)
+				
+				# send response
+				ConnectorHelper.sendShort(socket, 0b000000000001_1_010)
+				ConnectorHelper.sendString(socket, user_ip)
+			else:
+				print("Unknown request: " + str(msg))

@@ -49,8 +49,11 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 		self._thread_lock.acquire()
 		self._done_clients.remove(client)
 		self._thread_lock.release()
-			
-		return "127.0.0.1:" + str(port) # TODO get IP
+		
+		if client.timedout:
+			return "" # error
+		else:
+			return "127.0.0.1:" + str(port) # TODO get IP
 	
 	def get_min_id(self) -> int:
 		current_port = self._base_port
