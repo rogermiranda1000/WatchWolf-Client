@@ -22,7 +22,8 @@ login_timeout_sec = 3
 class MineflayerClient(MinecraftClient):
 	def __init__(self, host: str, port: int, username: str, assigned_port: int, on_client_connected: OnClientConnected, on_client_disconnected: OnClientDisconnected):
 		super().__init__(host, port, username)
-		self._connector = ClientConnector(self, assigned_port)
+		printer = lambda msg : print(f"[{username} - {host}:{str(port)}] {msg}")
+		self._connector = ClientConnector(self, assigned_port, printer)
 		self._client_connected_listener = on_client_connected
 		self._client_disconnected_listener = on_client_disconnected
 		
@@ -38,7 +39,7 @@ class MineflayerClient(MinecraftClient):
 		})
 		
 		@On(self._bot, "login")
-		def login(this):
+		def login(_):
 			self._thread_lock.acquire()
 			if self._timedout != None:
 				# too late
@@ -55,6 +56,11 @@ class MineflayerClient(MinecraftClient):
 		@On(self._bot, "end")
 		def end(*args):
 			print("Bot ended!", args)
+		
+		@On(self._bot, "chat")
+		def handle(_, username, message, *args):
+			print(args)
+			self._connector.message_received(username, message)
 	
 	def _login_timeout(self):
 		if self._client_connected_listener != None:
@@ -73,3 +79,9 @@ class MineflayerClient(MinecraftClient):
 	@property
 	def timedout(self) -> bool:
 		return self._timedout
+	
+	def send_message(self, msg: str):
+		self._bot.chat(msg)
+		
+	def send_command(self, cmd: str):
+		self._bot.chat(f"/{msg}")
