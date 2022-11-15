@@ -54,12 +54,12 @@ class MineflayerClient(MinecraftClient):
 				self._client_connected_listener.client_connected(self)
 			
 		@On(self._bot, "end")
-		def end(*args):
-			print("Bot ended!", args)
+		def end(_, reason): # TODO is it really the reason?
+			print("Bot ended: " + reason)
 		
 		@On(self._bot, "chat")
 		def handle(_, username, message, *args):
-			print(args)
+			print(username, message, args)
 			self._connector.message_received(username, message)
 	
 	def _login_timeout(self):

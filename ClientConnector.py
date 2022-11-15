@@ -22,9 +22,8 @@ class ClientConnector(OnMessage):
 			# accept connections from outside
 			(client_socket, address) = self.socket.accept() # TODO send address to the Client so it only replies to that one
 			
+			self._socket = client_socket
 			while True:
-				self._socket = client_socket
-				
 				msg = ConnectorHelper.readShort(client_socket)
 				if msg == 0b000000000011_0_011:
 					message = ConnectorHelper.readString(client_socket)
@@ -39,6 +38,9 @@ class ClientConnector(OnMessage):
 			self._socket = None # socket closed
 	
 	def message_received(self, username: str, msg: str):
-		ConnectorHelper.sendShort(socket, 0b000000000011_1_011)
-		ConnectorHelper.sendString(socket, username)
-		ConnectorHelper.sendString(socket, msg)
+		if self._socket == None:
+			return # no one to send
+		
+		ConnectorHelper.sendShort(self._socket, 0b000000000011_1_011)
+		ConnectorHelper.sendString(self._socket, username)
+		ConnectorHelper.sendString(self._socket, msg)
