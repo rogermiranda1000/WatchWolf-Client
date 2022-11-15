@@ -22,8 +22,9 @@ login_timeout_sec = 3
 class MineflayerClient(MinecraftClient):
 	def __init__(self, host: str, port: int, username: str, assigned_port: int, on_client_connected: OnClientConnected, on_client_disconnected: OnClientDisconnected):
 		super().__init__(host, port, username)
-		printer = lambda msg : print(f"[{username} - {host}:{str(port)}] {msg}")
+		printer = lambda msg,username=username,host=host,port=port : print(f"[{username} - {host}:{str(port)}] {msg}")
 		self._connector = ClientConnector(self, assigned_port, printer)
+		self._connector.run()
 		self._client_connected_listener = on_client_connected
 		self._client_disconnected_listener = on_client_disconnected
 		
@@ -34,8 +35,7 @@ class MineflayerClient(MinecraftClient):
 		self._bot = mineflayer.createBot({
 			"host": host,
 			"port": port,
-			"username": username,
-			"verbose": True
+			"username": username
 		})
 		
 		@On(self._bot, "login")
