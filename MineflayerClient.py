@@ -24,7 +24,6 @@ class MineflayerClient(MinecraftClient):
 		super().__init__(host, port, username)
 		printer = lambda msg,username=username,host=host,port=port : print(f"[{username} - {host}:{str(port)}] {msg}")
 		self._connector = ClientConnector(self, assigned_port, printer)
-		self._connector.run()
 		self._client_connected_listener = on_client_connected
 		self._client_disconnected_listener = on_client_disconnected
 		
@@ -37,6 +36,8 @@ class MineflayerClient(MinecraftClient):
 			"port": port,
 			"username": username
 		})
+		
+		Thread(target = self._connector.run, args = ()).start()
 		
 		@On(self._bot, "login")
 		def login(_):
@@ -58,9 +59,11 @@ class MineflayerClient(MinecraftClient):
 			print("Bot ended: " + reason)
 		
 		@On(self._bot, "chat")
-		def handle(_, username, message, *args):
-			print(username, message, args)
+		def handle(_, username, message):
 			self._connector.message_received(username, message)
+	
+	def __del__(self):
+		pass # TODO stop socket server
 	
 	def _login_timeout(self):
 		if self._client_connected_listener != None:

@@ -30,7 +30,7 @@ class ClientsManagerConnector:
 				username = ConnectorHelper.readString(socket)
 				ip = ConnectorHelper.readString(socket)
 				
-				print("Starting client " + username + " into " + ip + "...")
+				print("Starting client " + username + " at server " + ip + "...")
 				user_ip = self._petition_handler.start_client(username, ip)
 				if user_ip != "":
 					print("Client started at " + user_ip)

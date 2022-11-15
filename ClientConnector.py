@@ -3,6 +3,7 @@
 
 import socket
 
+from ConnectorHelper import ConnectorHelper
 from OnMessage import OnMessage
 from ClientPetition import ClientPetition
 
