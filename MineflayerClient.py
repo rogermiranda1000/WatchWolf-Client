@@ -59,7 +59,7 @@ class MineflayerClient(MinecraftClient):
 			print("Bot ended: " + reason)
 		
 		@On(self._bot, "chat")
-		def handle(_, username, message):
+		def handle(_, username, message, *args):
 			self._connector.message_received(username, message)
 	
 	def __del__(self):
