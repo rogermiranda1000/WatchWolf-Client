@@ -28,12 +28,20 @@ class ClientConnector(OnMessage):
 				msg = ConnectorHelper.readShort(client_socket)
 				if msg == 0b000000000011_0_011:
 					message = ConnectorHelper.readString(client_socket)
-					self._printer("Sending '" + message + "'...")
+					self._printer(f"Sending '{message}'...")
 					self._petition_handler.send_message(message)
 				elif msg == 0b000000000100_0_011:
 					command = ConnectorHelper.readString(client_socket)
-					self._printer("Running '" + command + "'...")
+					self._printer(f"Running '{command}'...")
 					self._petition_handler.send_command(command)
+				elif msg == 0b000000000101_0_011:
+					pos = ConnectorHelper.readPosition(client_socket)
+					self._printer(f"Breaking block at {pos}...")
+					self._petition_handler.break_block(pos)
+				elif msg == 0b000000000110_0_011:
+					item = ConnectorHelper.readItem(client_socket)
+					self._printer(f"Set {item} as item in hand")
+					self._petition_handler.equip_item_in_hand(item)
 				else:
 					self._printer("Unknown request: " + str(msg))
 			self._socket = None # socket closed
