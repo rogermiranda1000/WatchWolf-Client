@@ -7,6 +7,9 @@ from ClientConnector import ClientConnector
 from OnClientConnected import OnClientConnected
 from OnClientDisconnected import OnClientDisconnected
 
+from Position import Position
+from Item import Item
+
 import socket
 from threading import Thread
 
@@ -14,7 +17,10 @@ import threading
 import time
 
 from javascript import require, On, Once, console
-mineflayer = require("mineflayer", "latest")
+mineflayer = require('mineflayer', 'latest')
+pathfinder = require('mineflayer-pathfinder', 'latest').pathfinder
+collectBlock = require('mineflayer-collectblock', 'latest').plugin
+Vec3 = require("vec3").Vec3
 
 # time to force the login
 login_timeout_sec = 3
@@ -22,8 +28,8 @@ login_timeout_sec = 3
 class MineflayerClient(MinecraftClient):
 	def __init__(self, host: str, port: int, username: str, assigned_port: int, on_client_connected: OnClientConnected, on_client_disconnected: OnClientDisconnected):
 		super().__init__(host, port, username)
-		printer = lambda msg,username=username,host=host,port=port : print(f"[{username} - {host}:{str(port)}] {msg}")
-		self._connector = ClientConnector(self, assigned_port, printer)
+		self._printer = lambda msg,username=username,host=host,port=port : print(f"[{username} - {host}:{str(port)}] {msg}")
+		self._connector = ClientConnector(self, assigned_port, self._printer)
 		self._client_connected_listener = on_client_connected
 		self._client_disconnected_listener = on_client_disconnected
 		
@@ -88,3 +94,12 @@ class MineflayerClient(MinecraftClient):
 		
 	def send_command(self, cmd: str):
 		self._bot.chat(f"/{msg}")
+	
+	def break_block(self, block: Position):
+		mineflayer_block = self._bot.findBlock({ # @ref https://github.com/PrismarineJS/mineflayer/blob/4fe36f57dc38c0d369c1985dccf8947c9c06dfce/lib/plugins/blocks.js#L150
+			"point": Vec3(int(block.x), int(block.y), int(block.z)) # TODO error if not same world
+		})
+		self._bot.collectBlock.collect(mineflayer_block, lambda err: self._printer(f"[e] Break block at {block} raised error {err.message}"))
+	
+	def equip_item_in_hand(self, item: Item):
+		pass

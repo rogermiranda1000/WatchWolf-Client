@@ -34,6 +34,24 @@ class ConnectorHelper:
 		socket.sendall(b''.join([lsb, msb]))
 	
 	@staticmethod
+	def readDouble(socket) -> float:
+		r = 0
+		for _ in range(8):
+			r = (r << 8) | int(socket.recv(1)[0])
+		
+		# @ref https://en.wikipedia.org/w/index.php?title=Double-precision_floating-point_format&oldid=1124030667#IEEE_754_double-precision_binary_floating-point_format:_binary64
+		sign = (r >> 63) > 0
+		exponent = (r >> 52) & 0b11111111111
+		fraction = r & 4503599627370495 # 52 bits
+		
+		r = (1 + fraction / 10**52) * (2**(exponent - 1023))
+		return -r if sign else r
+	
+	@staticmethod
+	def sendDouble(socket, data: float):
+		pass
+	
+	@staticmethod
 	def readItem(socket) -> Item:
 		type = ItemType(ConnectorHelper.readShort(socket))
 		amount = int(socket.recv(1)[0])
@@ -45,7 +63,11 @@ class ConnectorHelper:
 	
 	@staticmethod
 	def readPosition(socket) -> Position:
-		return None
+		world = ConnectorHelper.readString(socket)
+		x = ConnectorHelper.readDouble(socket)
+		y = ConnectorHelper.readDouble(socket)
+		z = ConnectorHelper.readDouble(socket)
+		return Position(world, x, y, z)
 	
 	@staticmethod
 	def sendPosition(socket, pos: Position):
