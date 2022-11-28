@@ -43,6 +43,10 @@ class MineflayerClient(MinecraftClient):
 			"username": username
 		})
 		
+		# Load pathfinder and collect block plugins
+		self._bot.loadPlugin(pathfinder)
+		self._bot.loadPlugin(collectBlock)
+		
 		Thread(target = self._connector.run, args = ()).start()
 		
 		@On(self._bot, "login")

@@ -71,4 +71,7 @@ class ConnectorHelper:
 	
 	@staticmethod
 	def sendPosition(socket, pos: Position):
-		pass
+		ConnectorHelper.sendString(socket, pos.world)
+		ConnectorHelper.sendDouble(socket, pos.x)
+		ConnectorHelper.sendDouble(socket, pos.y)
+		ConnectorHelper.sendDouble(socket, pos.z)
