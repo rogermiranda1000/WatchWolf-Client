@@ -5,6 +5,8 @@ from Item import Item
 from Position import Position
 from ItemType import ItemType
 
+from struct import unpack
+
 class ConnectorHelper:
 	@staticmethod
 	def readString(socket) -> str:
@@ -35,17 +37,8 @@ class ConnectorHelper:
 	
 	@staticmethod
 	def readDouble(socket) -> float:
-		r = 0
-		for _ in range(8):
-			r = (r << 8) | int(socket.recv(1)[0])
-		
-		# @ref https://en.wikipedia.org/w/index.php?title=Double-precision_floating-point_format&oldid=1124030667#IEEE_754_double-precision_binary_floating-point_format:_binary64
-		sign = (r >> 63) > 0
-		exponent = (r >> 52) & 0b11111111111
-		fraction = r & 4503599627370495 # 52 bits
-		
-		r = (1 + fraction / 10**52) * (2**(exponent - 1023))
-		return -r if sign else r
+		double = socket.recv(8)
+		return unpack('>d', double)[0]
 	
 	@staticmethod
 	def sendDouble(socket, data: float):
