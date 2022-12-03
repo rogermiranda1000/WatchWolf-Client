@@ -18,8 +18,6 @@ import time
 
 from javascript import require, On, Once, console
 mineflayer = require('mineflayer', 'latest')
-pathfinder = require('mineflayer-pathfinder', 'latest').pathfinder
-collectBlock = require('mineflayer-collectblock', 'latest').plugin
 Vec3 = require("vec3").Vec3
 
 # time to force the login
@@ -42,10 +40,6 @@ class MineflayerClient(MinecraftClient):
 			"port": port,
 			"username": username
 		})
-		
-		# Load pathfinder and collect block plugins
-		self._bot.loadPlugin(pathfinder)
-		self._bot.loadPlugin(collectBlock)
 		
 		Thread(target = self._connector.run, args = ()).start()
 		
@@ -99,11 +93,15 @@ class MineflayerClient(MinecraftClient):
 	def send_command(self, cmd: str):
 		self._bot.chat(f"/{msg}")
 	
+	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/digger.js
 	def break_block(self, block: Position):
-		mineflayer_block = self._bot.findBlock({ # @ref https://github.com/PrismarineJS/mineflayer/blob/4fe36f57dc38c0d369c1985dccf8947c9c06dfce/lib/plugins/blocks.js#L150
-			"point": Vec3(int(block.x), int(block.y), int(block.z)) # TODO error if not same world
-		})
-		self._bot.collectBlock.collect(mineflayer_block, lambda err: self._printer(f"[e] Break block at {block} raised error {err.message}"))
+		target = self._bot.blockAt(Vec3(int(block.x), int(block.y), int(block.z)))
+		if target and self._bot.canDigBlock(target):
+			try:
+				self._bot.dig(target) # TODO await
+				self._printer(f"Finished breaking block at {block}")
+			except Exception as err:
+				self._printer(f"[e] Break block at {block} raised error {err.message}")
 	
 	def equip_item_in_hand(self, item: Item):
 		pass
