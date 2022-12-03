@@ -11,9 +11,8 @@ from Position import Position
 from Item import Item
 
 import socket
-from threading import Thread
-
-import threading
+from threading import Thread, Lock
+from math import ceil
 import time
 
 from javascript import require, On, Once, console
@@ -31,7 +30,7 @@ class MineflayerClient(MinecraftClient):
 		self._client_connected_listener = on_client_connected
 		self._client_disconnected_listener = on_client_disconnected
 		
-		self._thread_lock = threading.Lock()
+		self._thread_lock = Lock()
 		self._timedout = None
 		Thread(target = self._login_timeout).start()
 		
@@ -93,12 +92,16 @@ class MineflayerClient(MinecraftClient):
 	def send_command(self, cmd: str):
 		self._bot.chat(f"/{msg}")
 	
+	def _pos_to_vec3(self, pos: Position) -> Vec3:
+		# 10.5 -> 10; -27.5 -> -28
+		return self._bot.blockAt(Vec3(-ceil(-pos.x), ceil(pos.y), -ceil(-pos.z))) # TODO world
+	
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/digger.js
 	def break_block(self, block: Position):
-		target = self._bot.blockAt(Vec3(int(block.x), int(block.y), int(block.z)))
+		target = self._pos_to_vec3(block)
 		if target and self._bot.canDigBlock(target):
 			try:
-				self._bot.dig(target) # TODO await
+				self._bot.dig(target)
 				self._printer(f"Finished breaking block at {block}")
 			except Exception as err:
 				self._printer(f"[e] Break block at {block} raised error {err.message}")
