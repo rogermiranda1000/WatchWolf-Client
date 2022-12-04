@@ -42,6 +42,9 @@ class ClientConnector(OnMessage):
 					item = ConnectorHelper.readItem(client_socket)
 					self._printer(f"Set {item} as item in hand")
 					self._petition_handler.equip_item_in_hand(item)
+				elif msg == 0b000000001001_0_011:
+					self._petition_handler.synchronize()
+					ConnectorHelper.sendShort(client_socket, 0b000000001001_1_011)
 				else:
 					self._printer("Unknown request: " + str(msg))
 			self._socket = None # socket closed
