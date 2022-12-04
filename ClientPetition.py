@@ -17,5 +17,5 @@ class ClientPetition:
 	def equip_item_in_hand(self, item: Item):
 		pass
 	
-	def synchronize():
+	def synchronize(self):
 		pass

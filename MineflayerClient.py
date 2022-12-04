@@ -117,4 +117,6 @@ class MineflayerClient(MinecraftClient):
 		target = self._find_item_in_player(item)
 		if not target:
 			self._printer(f"{item} not found in player's inventory")
+			return
+			
 		self._bot.equip(target, 'hand')
