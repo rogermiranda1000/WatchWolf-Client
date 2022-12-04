@@ -96,6 +96,10 @@ class MineflayerClient(MinecraftClient):
 		# 10.5 -> 10; -27.5 -> -28
 		return self._bot.blockAt(Vec3(-ceil(-pos.x), ceil(pos.y), -ceil(-pos.z))) # TODO world
 	
+	def _find_item_in_player(self, item: Item): # TODO return type
+		filter = (i for i in self._bot.inventory.items() if i.name == item.type.name.lower() and i.count == item.amount)
+		return next(filter, None) # get the first item that matches (None if none)
+	
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/digger.js
 	def break_block(self, block: Position):
 		target = self._pos_to_vec3(block)
@@ -106,5 +110,11 @@ class MineflayerClient(MinecraftClient):
 			except Exception as err:
 				self._printer(f"[e] Break block at {block} raised error {err.message}")
 	
+	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/digger.js
+	# @ref https://github.com/PrismarineJS/mineflayer/blob/b7650c69e2b3db8e6c0fe8d227f66cb5c2c959a0/lib/plugins/simple_inventory.js#L88
+	# @ref https://github.com/PrismarineJS/mineflayer/issues/2383
 	def equip_item_in_hand(self, item: Item):
-		pass
+		target = self._find_item_in_player(item)
+		if not target:
+			self._printer(f"{item} not found in player's inventory")
+		self._bot.equip(target, 'hand')
