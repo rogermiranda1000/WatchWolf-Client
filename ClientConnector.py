@@ -45,9 +45,22 @@ class ClientConnector(OnMessage):
 				item = ConnectorHelper.readItem(client_socket)
 				self._printer(f"Set {item} as item in hand")
 				self._petition_handler.equip_item_in_hand(item)
+			elif msg == 0b000000000111_0_011:
+				pos = ConnectorHelper.readPosition(client_socket)
+				self._printer(f"Going to {pos}")
+				self._petition_handler.move_to(pos)
+			elif msg == 0b000000001000_0_011:
+				pitch = ConnectorHelper.readDouble(client_socket)
+				yaw = ConnectorHelper.readDouble(client_socket)
+				self._printer(f"Looking at {pitch}, {yaw}")
+				self._petition_handler.look_at(pitch, yaw)
 			elif msg == 0b000000001001_0_011:
 				self._petition_handler.synchronize()
-				ConnectorHelper.sendShort(client_socket, 0b000000001001_1_011)
+				ConnectorHelper.sendShort(client_socket, 0b000000001001_1_011) # response
+			elif msg == 0b000000001010_0_011:
+				self._petition_handler.hit()
+			elif msg == 0b000000001010_0_011:
+				self._petition_handler.use()
 			else:
 				self._printer("Unknown request: " + str(msg))
 		self._socket = None # socket closed

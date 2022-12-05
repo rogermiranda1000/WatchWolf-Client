@@ -17,6 +17,9 @@ import time
 
 from javascript import require, On, Once, console
 mineflayer = require('mineflayer', 'latest')
+pathfinder = require('mineflayer-pathfinder').pathfinder
+Movements = require('mineflayer-pathfinder').Movements
+GoalBlock = require('mineflayer-pathfinder').goals
 Vec3 = require("vec3").Vec3
 
 # time to force the login
@@ -40,6 +43,9 @@ class MineflayerClient(MinecraftClient):
 			"username": username
 		})
 		
+		# add-ons
+		self._bot.loadPlugin(pathfinder);
+		
 		Thread(target = self._connector.run, args = ()).start()
 		
 		@On(self._bot, "login")
@@ -54,6 +60,13 @@ class MineflayerClient(MinecraftClient):
 			
 			print(self._username + " connected to the server (" + self.server + ")")
 			
+			# pathfinder initialization
+			defaultMove = Movements(self._bot)
+			defaultMove.canDig = False
+			defaultMove.placeCost = 8000
+			self._bot.pathfinder.setMovements(defaultMove)
+			
+			# notify 
 			if self._client_connected_listener != None:
 				self._client_connected_listener.client_connected(self)
 			
@@ -120,3 +133,22 @@ class MineflayerClient(MinecraftClient):
 			return
 			
 		self._bot.equip(target, 'hand')
+	
+	# @ref https://github.com/PrismarineJS/mineflayer-pathfinder#example
+	def move_to(self, pos: Position):
+		self._bot.pathfinder.setGoal(GoalBlock(pos.x, pos.y, pos.z))
+		# TODO wait for goal_reached event? @ref https://github.com/PrismarineJS/mineflayer-pathfinder#goal_reached
+		
+	def look_at(self, pitch: float, yaw: float):
+		pass # TODO
+	
+	def hit(self):
+		pass # TODO
+	
+	# @ref https://github.com/PrismarineJS/mineflayer/issues/766
+	def use(self):
+		self._bot.activateItem()
+	
+	# TODO right/left click inventory?
+	# @ref https://mineflayer.prismarine.js.org/#/api?id=botsimpleclickleftmouse-slot
+	# @ref https://mineflayer.prismarine.js.org/#/api?id=botquickbarslot
