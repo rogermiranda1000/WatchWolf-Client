@@ -137,8 +137,7 @@ class MineflayerClient(MinecraftClient):
 	# @ref https://github.com/PrismarineJS/mineflayer-pathfinder#example
 	def move_to(self, pos: Position):
 		goal = GoalBlock(pos.x, pos.y, pos.z)
-		self._bot.pathfinder.setGoal(goal)
-		# TODO wait for goal_reached event? @ref https://github.com/PrismarineJS/mineflayer-pathfinder#goal_reached
+		self._bot.pathfinder.goto(goal)
 		
 	def look_at(self, pitch: float, yaw: float):
 		pass # TODO
