@@ -19,7 +19,7 @@ from javascript import require, On, Once, console
 mineflayer = require('mineflayer', 'latest')
 pathfinder = require('mineflayer-pathfinder').pathfinder
 Movements = require('mineflayer-pathfinder').Movements
-GoalBlock = require('mineflayer-pathfinder').goals
+GoalBlock = require('mineflayer-pathfinder').goals.GoalBlock
 Vec3 = require("vec3").Vec3
 
 # time to force the login
@@ -136,7 +136,8 @@ class MineflayerClient(MinecraftClient):
 	
 	# @ref https://github.com/PrismarineJS/mineflayer-pathfinder#example
 	def move_to(self, pos: Position):
-		self._bot.pathfinder.setGoal(GoalBlock(pos.x, pos.y, pos.z))
+		goal = GoalBlock(pos.x, pos.y, pos.z)
+		self._bot.pathfinder.setGoal(goal)
 		# TODO wait for goal_reached event? @ref https://github.com/PrismarineJS/mineflayer-pathfinder#goal_reached
 		
 	def look_at(self, pitch: float, yaw: float):
