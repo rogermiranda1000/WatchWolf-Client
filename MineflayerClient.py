@@ -13,7 +13,7 @@ from Item import Item
 import socket
 from threading import Thread, Lock
 from math import ceil
-import time
+from time import sleep
 
 from javascript import require, On, Once, console
 mineflayer = require('mineflayer', 'latest')
@@ -83,7 +83,7 @@ class MineflayerClient(MinecraftClient):
 	
 	def _login_timeout(self):
 		if self._client_connected_listener != None:
-			time.sleep(login_timeout_sec)
+			sleep(login_timeout_sec)
 			
 			self._thread_lock.acquire()
 			timedout = (self._timedout == None)
@@ -140,15 +140,14 @@ class MineflayerClient(MinecraftClient):
 		self._bot.pathfinder.goto(goal)
 		
 	def look_at(self, pitch: float, yaw: float):
-		pass # TODO
+		self._bot.look(yaw, pitch, True) # look transition-free
 	
 	def hit(self):
-		pass # TODO
+		self._bot.swingArm() # TODO attack
 	
+	# @ref https://github.com/PrismarineJS/mineflayer/issues/421
 	# @ref https://github.com/PrismarineJS/mineflayer/issues/766
 	def use(self):
-		self._bot.activateItem()
-	
-	# TODO right/left click inventory?
-	# @ref https://mineflayer.prismarine.js.org/#/api?id=botsimpleclickleftmouse-slot
-	# @ref https://mineflayer.prismarine.js.org/#/api?id=botquickbarslot
+		self._bot.activateItem() # TODO useOn, mount, openContainer...
+		sleep(0.1)
+		self._bot.deactivateItem()
