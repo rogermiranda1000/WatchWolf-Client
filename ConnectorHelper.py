@@ -5,6 +5,8 @@ from Item import Item
 from Position import Position
 from ItemType import ItemType
 
+from struct import unpack
+
 class ConnectorHelper:
 	@staticmethod
 	def readString(socket) -> str:
@@ -34,6 +36,15 @@ class ConnectorHelper:
 		socket.sendall(b''.join([lsb, msb]))
 	
 	@staticmethod
+	def readDouble(socket) -> float:
+		double = socket.recv(8)
+		return unpack('>d', double)[0]
+	
+	@staticmethod
+	def sendDouble(socket, data: float):
+		pass
+	
+	@staticmethod
 	def readItem(socket) -> Item:
 		type = ItemType(ConnectorHelper.readShort(socket))
 		amount = int(socket.recv(1)[0])
@@ -45,8 +56,15 @@ class ConnectorHelper:
 	
 	@staticmethod
 	def readPosition(socket) -> Position:
-		return None
+		world = ConnectorHelper.readString(socket)
+		x = ConnectorHelper.readDouble(socket)
+		y = ConnectorHelper.readDouble(socket)
+		z = ConnectorHelper.readDouble(socket)
+		return Position(world, x, y, z)
 	
 	@staticmethod
 	def sendPosition(socket, pos: Position):
-		pass
+		ConnectorHelper.sendString(socket, pos.world)
+		ConnectorHelper.sendDouble(socket, pos.x)
+		ConnectorHelper.sendDouble(socket, pos.y)
+		ConnectorHelper.sendDouble(socket, pos.z)

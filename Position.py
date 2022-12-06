@@ -32,4 +32,4 @@ class Position:
 		return self._world == obj._world and self._x == obj._x and self._y == obj._y and self._z == obj._z
 	
 	def __str__(self):
-		return self._world + "{" + f"{x},{y},{z}" + "}"
+		return self._world + "{" + f"{self._x},{self._y},{self._z}" + "}"

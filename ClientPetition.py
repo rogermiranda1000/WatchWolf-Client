@@ -16,3 +16,18 @@ class ClientPetition:
 	
 	def equip_item_in_hand(self, item: Item):
 		pass
+	
+	def move_to(self, pos: Position):
+		pass
+	
+	def look_at(self, pitch: float, yaw: float):
+		pass
+	
+	def synchronize(self):
+		pass
+	
+	def hit(self):
+		pass
+	
+	def use(self):
+		pass
