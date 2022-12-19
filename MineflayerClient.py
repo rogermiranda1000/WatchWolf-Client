@@ -123,6 +123,9 @@ class MineflayerClient(MinecraftClient):
 			except Exception as err:
 				self._printer(f"[e] Break block at {block} raised error {err.message}")
 	
+	def place_block(self, block: Position):
+		pass
+	
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/digger.js
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/b7650c69e2b3db8e6c0fe8d227f66cb5c2c959a0/lib/plugins/simple_inventory.js#L88
 	# @ref https://github.com/PrismarineJS/mineflayer/issues/2383

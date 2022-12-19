@@ -14,6 +14,9 @@ class ClientPetition:
 	def break_block(self, block: Position):
 		pass
 	
+	def place_block(self, block: Position):
+		pass
+	
 	def equip_item_in_hand(self, item: Item):
 		pass
 	
