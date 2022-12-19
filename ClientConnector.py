@@ -58,9 +58,15 @@ class ClientConnector(OnMessage):
 				self._petition_handler.synchronize()
 				ConnectorHelper.sendShort(client_socket, 0b000000001001_1_011) # response
 			elif msg == 0b000000001010_0_011:
+				self._printer(f"Hitting with current item...")
 				self._petition_handler.hit()
-			elif msg == 0b000000001010_0_011:
+			elif msg == 0b000000001011_0_011:
+				self._printer(f"Using current item...")
 				self._petition_handler.use()
+			elif msg == 0b000000001100_0_011:
+				pos = ConnectorHelper.readPosition(client_socket)
+				self._printer(f"Placing current block at {pos}...")
+				self._petition_handler.place_block(pos)
 			else:
 				self._printer("Unknown request: " + str(msg))
 		self._socket = None # socket closed

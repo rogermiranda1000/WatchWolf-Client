@@ -105,9 +105,10 @@ class MineflayerClient(MinecraftClient):
 	def send_command(self, cmd: str):
 		self._bot.chat(f"/{msg}")
 	
-	def _pos_to_vec3(self, pos: Position) -> Vec3:
+	@staticmethod
+	def _pos_to_vec3(pos: Position) -> Vec3:
 		# 10.5 -> 10; -27.5 -> -28
-		return self._bot.blockAt(Vec3(-ceil(-pos.x), ceil(pos.y), -ceil(-pos.z))) # TODO world
+		return Vec3(-ceil(-pos.x), ceil(pos.y), -ceil(-pos.z)) # TODO world
 	
 	def _find_item_in_player(self, item: Item): # TODO return type
 		filter = (i for i in self._bot.inventory.items() if i.name == item.type.name.lower() and i.count == item.amount)
@@ -115,13 +116,26 @@ class MineflayerClient(MinecraftClient):
 	
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/digger.js
 	def break_block(self, block: Position):
-		target = self._pos_to_vec3(block)
+		target = self._bot.blockAt(MineflayerClient._pos_to_vec3(block))
 		if target and self._bot.canDigBlock(target):
 			try:
 				self._bot.dig(target)
 				self._printer(f"Finished breaking block at {block}")
 			except Exception as err:
 				self._printer(f"[e] Break block at {block} raised error {err.message}")
+	
+	def place_block(self, block: Position):
+		try:
+			# find a block & face to place
+			for offset in [(0,-1,0),(1,0,0),(-1,0,0),(0,0,1),(0,0,-1),(0,1,0)]:
+				base_block_location=MineflayerClient._pos_to_vec3(block+offset)
+				base_block=self._bot.blockAt(base_block_location)
+				if base_block is not None and base_block.id != "minecraft:air":
+					face=Vec3(-offset[0],-offset[1],-offset[2]) # the face will be the inverse of position
+					self._bot.placeBlock(base_block, face)
+					return # TODO check if placed (it can be a block where you can't place any item)
+		except Exception as err:
+			self._printer(f"Exception while placing a block at {block}: {err}")
 	
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/digger.js
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/b7650c69e2b3db8e6c0fe8d227f66cb5c2c959a0/lib/plugins/simple_inventory.js#L88
@@ -132,7 +146,7 @@ class MineflayerClient(MinecraftClient):
 			self._printer(f"{item} not found in player's inventory")
 			return
 			
-		self._bot.equip(target, 'hand')
+		self._bot.equip(target, 'hand') # TODO bot.moveSlotItem? @ref https://stackoverflow.com/a/55584100/9178470
 	
 	# @ref https://github.com/PrismarineJS/mineflayer-pathfinder#example
 	def move_to(self, pos: Position):
