@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import socket
+from time import sleep
 from threading import Thread
 from ClientsManagerPetition import ClientsManagerPetition
 from ConnectorHelper import ConnectorHelper
@@ -38,5 +39,7 @@ class ClientsManagerConnector:
 				# send response
 				ConnectorHelper.sendShort(socket, 0b000000000001_1_010)
 				ConnectorHelper.sendString(socket, user_ip)
+                
+                sleep(1) # @ref https://github.com/PrismarineJS/mineflayer/issues/2749
 			else:
 				print("Unknown request: " + str(msg))
