@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import threading
+from time import sleep
 
 from ClientsManagerPetition import ClientsManagerPetition
 from ClientsManagerConnector import ClientsManagerConnector
@@ -36,6 +37,7 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 	def start_client(self, username: str, server_ip: str) -> str:
 		ip = server_ip.split(":")
 		port = self.get_min_id()
+		sleep(8) # @ref https://github.com/PrismarineJS/mineflayer/issues/2749
 		client = self._client_builder(username, ip[0], int(ip[1]), port, self, self)
 		self._client_list[port] = client
 		
