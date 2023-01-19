@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import threading
 from time import sleep
 
@@ -55,7 +56,7 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 		if client.timedout:
 			return "" # error
 		else:
-			return "127.0.0.1:" + str(port) # TODO get IP
+			return f"{os.environ['MACHINE_IP']}:{port}"
 	
 	def get_min_id(self) -> int:
 		current_port = self._base_port
