@@ -56,7 +56,7 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 		if client.timedout:
 			return "" # error
 		else:
-			return os.environ["MACHINE_IP"] + str(port) # TODO get IP
+			return f"{os.environ['MACHINE_IP']}:{port}"
 	
 	def get_min_id(self) -> int:
 		current_port = self._base_port
