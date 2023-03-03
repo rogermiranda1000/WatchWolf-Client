@@ -22,7 +22,7 @@ class Item:
 
 	def __eq__(self, obj: Any) -> bool:
 		if type(self) != type(obj):
-			return false
+			return False
 		return self._type == obj._type and self._amount == obj._amount
 
 	def __str__(self):

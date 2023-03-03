@@ -35,7 +35,7 @@ class Position:
 
 	def __eq__(self, obj: Any) -> bool:
 		if type(self) != type(obj):
-			return false
+			return False
 		return self._world == obj._world and self._x == obj._x and self._y == obj._y and self._z == obj._z
 	
 	def __str__(self):

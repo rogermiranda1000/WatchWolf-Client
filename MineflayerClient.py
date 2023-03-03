@@ -9,6 +9,7 @@ from OnClientDisconnected import OnClientDisconnected
 
 from Position import Position
 from Item import Item
+from entities.Entity import Entity
 
 import socket
 from threading import Thread, Lock
@@ -165,3 +166,10 @@ class MineflayerClient(MinecraftClient):
 		self._bot.activateItem() # TODO useOn, mount, openContainer...
 		sleep(0.1)
 		self._bot.deactivateItem()
+
+	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/docs/api.md#botattackentity-swing--true
+	# @ref https://github.com/PrismarineJS/prismarine-entity#entityid
+	def attack(self, entity: Entity):
+		match = next((e for e in self._bot.entities if e.id == entity.uuid), None)
+		if match != None:
+			self._bot.attack(match)

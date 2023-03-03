@@ -4,6 +4,8 @@
 from Item import Item
 from Position import Position
 from ItemType import ItemType
+from entities.EntityType import EntityType
+from entities.Entity import Entity
 
 from struct import unpack
 
@@ -52,7 +54,21 @@ class ConnectorHelper:
 	
 	@staticmethod
 	def sendItem(socket, item: Item):
-		pass
+		pass # TODO
+	
+	@staticmethod
+	def readEntity(socket) -> Entity:
+		type = EntityType(ConnectorHelper.readShort(socket))
+		uuid = ConnectorHelper.readString(socket)
+		pos = ConnectorHelper.readPosition(socket)
+		# TODO create the fitting class instance
+		if type == EntityType.DROPPED_ITEM:
+			ConnectorHelper.readItem(socket) # we need to discard the item
+		return Entity(uuid, pos)
+	
+	@staticmethod
+	def sendEntity(socket, entity: Entity):
+		pass # TODO
 	
 	@staticmethod
 	def readPosition(socket) -> Position:
