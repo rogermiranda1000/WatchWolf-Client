@@ -169,7 +169,9 @@ class MineflayerClient(MinecraftClient):
 
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/docs/api.md#botattackentity-swing--true
 	# @ref https://github.com/PrismarineJS/prismarine-entity#entityid
+	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/trader.js#L49
 	def attack(self, entity: Entity):
-		match = next((e for e in self._bot.entities if e.id == entity.uuid), None)
+		entities = list(self._bot.entities.values()) # Python equivalent of `Object.keys(self._bot.entities).map(id => self._bot.entities[id])`
+		match = next((e for e in entities if e.id == entity.uuid), None)
 		if match != None:
 			self._bot.attack(match)
