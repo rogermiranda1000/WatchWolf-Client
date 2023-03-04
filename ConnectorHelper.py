@@ -59,8 +59,8 @@ class ConnectorHelper:
 	@staticmethod
 	def readEntity(socket) -> Entity:
 		type = EntityType(ConnectorHelper.readShort(socket))
-		uuid = ConnectorHelper.readString(socket)
 		pos = ConnectorHelper.readPosition(socket)
+		uuid = ConnectorHelper.readString(socket)
 		# TODO create the fitting class instance
 		if type == EntityType.DROPPED_ITEM:
 			ConnectorHelper.readItem(socket) # we need to discard the item
