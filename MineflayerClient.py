@@ -175,5 +175,6 @@ class MineflayerClient(MinecraftClient):
 		match = next((e for e in entities if e.uuid == entity.uuid), None)
 		if match != None:
 			self._bot.attack(match)
+			sleep(2) # TODO is attack async?
 		else:
 			self._printer(f"Entity with uuid={entity.uuid} not found nearby")
