@@ -3,6 +3,7 @@
 
 from Item import Item
 from Position import Position
+from entities.Entity import Entity
 
 class ClientPetition:
 	def send_message(self, msg: str):
@@ -33,4 +34,7 @@ class ClientPetition:
 		pass
 	
 	def use(self):
+		pass
+
+	def attack(self, entity: Entity):
 		pass
