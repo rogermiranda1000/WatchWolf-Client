@@ -172,10 +172,6 @@ class MineflayerClient(MinecraftClient):
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/trader.js#L49
 	def attack(self, entity: Entity):
 		entities = [self._bot.entities[id] for id in self._bot.entities] # Python equivalent of `Object.keys(self._bot.entities).map(id => self._bot.entities[id])`
-
-		for e in entities:
-			print(str(e))
-
 		match = next((e for e in entities if e.id == entity.uuid), None)
 		if match != None:
 			self._bot.attack(match)
