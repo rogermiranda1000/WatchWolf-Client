@@ -35,7 +35,7 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 	def client_disconnected(self, client: MinecraftClient):
 		pass # TODO remove [syncronized] client from self._client_list
 	
-	def start_client(self, username: str, server_ip: str) -> str:
+	def start_client(self, username: str, server_ip: str, public_access: bool = False) -> str:
 		ip = server_ip.split(":")
 		port = self.get_min_id()
 		sleep(8) # @ref https://github.com/PrismarineJS/mineflayer/issues/2749
@@ -56,7 +56,10 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 		if client.timedout:
 			return "" # error
 		else:
-			return f"{os.environ['MACHINE_IP']}:{port}"
+			if public_access:
+				return f"{os.environ['PUBLIC_IP']}:{port}"
+			else:
+				return f"{os.environ['MACHINE_IP']}:{port}"
 	
 	def get_min_id(self) -> int:
 		current_port = self._base_port

@@ -5,6 +5,7 @@ import socket
 from threading import Thread
 from ClientsManagerPetition import ClientsManagerPetition
 from ConnectorHelper import ConnectorHelper
+import ipaddress
 
 class ClientsManagerConnector:
 	def __init__(self, petition_handler: ClientsManagerPetition, port: int = 7000):
@@ -20,9 +21,14 @@ class ClientsManagerConnector:
 			# accept connections from outside
 			(client_socket, address) = self.socket.accept() # TODO send address to the Client so it only replies to that one
 			
-			Thread(target = self._client_manager, args = (client_socket,)).start()
+			Thread(target = self._client_manager, args = (client_socket,ClientsManagerConnector._is_public_ip(address))).start()
 	
-	def _client_manager(self, socket):
+	@staticmethod
+	def _is_public_ip(address) -> bool:
+		ip = ipaddress.ip_address(address[0])
+		return not ip.is_private
+	
+	def _client_manager(self, socket, public_access: bool):
 		while True:
 			msg = ConnectorHelper.readShort(socket)
 			if msg == 0b000000000001_0_010:
@@ -31,7 +37,7 @@ class ClientsManagerConnector:
 				ip = ConnectorHelper.readString(socket)
 				
 				print("Starting client " + username + " at server " + ip + "...")
-				user_ip = self._petition_handler.start_client(username, ip)
+				user_ip = self._petition_handler.start_client(username, ip, public_access)
 				if user_ip != "":
 					print("Client started at " + user_ip)
 				
