@@ -26,6 +26,9 @@ Vec3 = require("vec3").Vec3
 # time to force the login
 login_timeout_sec = 120
 
+# the MC packets also have a timeout
+packet_timeout_sec = 120
+
 class MineflayerClient(MinecraftClient):
 	def __init__(self, host: str, port: int, username: str, assigned_port: int, on_client_connected: OnClientConnected, on_client_disconnected: OnClientDisconnected):
 		super().__init__(host, port, username)
@@ -41,7 +44,9 @@ class MineflayerClient(MinecraftClient):
 		self._bot = mineflayer.createBot({
 			"host": host,
 			"port": port,
-			"username": username
+			"username": username,
+
+			"checkTimeoutInterval": packet_timeout_sec * 1000
 		})
 		
 		# add-ons
