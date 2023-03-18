@@ -24,7 +24,7 @@ GoalBlock = require('mineflayer-pathfinder').goals.GoalBlock
 Vec3 = require("vec3").Vec3
 
 # time to force the login
-login_timeout_sec = 20
+login_timeout_sec = 120
 
 class MineflayerClient(MinecraftClient):
 	def __init__(self, host: str, port: int, username: str, assigned_port: int, on_client_connected: OnClientConnected, on_client_disconnected: OnClientDisconnected):
@@ -45,7 +45,7 @@ class MineflayerClient(MinecraftClient):
 		})
 		
 		# add-ons
-		self._bot.loadPlugin(pathfinder);
+		self._bot.loadPlugin(pathfinder)
 		
 		Thread(target = self._connector.run, args = ()).start()
 		
