@@ -2,5 +2,5 @@
 # -*- coding: utf-8 -*-
 
 class ClientsManagerPetition:
-	def start_client(self, username: str, server_ip: str) -> str:
+	def start_client(self, username: str, server_ip: str, public_access: bool = False) -> str:
 		pass
