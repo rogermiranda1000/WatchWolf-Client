@@ -52,7 +52,7 @@ class MineflayerClient(MinecraftClient):
 			"checkTimeoutInterval": packet_timeout_sec * 1000
 		})
         
-		self._cmd_return_lock = threading.Lock()
+		self._cmd_return_lock = Lock()
 		self._cmd_return = []
 		
 		# add-ons
