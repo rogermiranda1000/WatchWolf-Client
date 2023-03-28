@@ -35,14 +35,14 @@ class ClientConnector(OnMessage):
 				self._petition_handler.send_message(message)
 			elif msg == 0b000000000100_0_011:
 				command = ConnectorHelper.readString(client_socket)
-                timeout = ConnectorHelper.readShort(client_socket)
+				timeout = ConnectorHelper.readShort(client_socket)
 				self._printer(f"Running '{command}'...")
 				reply = self._petition_handler.send_command(command, timeout)
 				if len(reply) > 0: self._printer(f"Result of '{command}' was '{reply}'")
-                
-                # response
-                ConnectorHelper.sendShort(self._socket, 0b000000000100_1_011)
-                ConnectorHelper.sendString(self._socket, reply)
+				
+				# response
+				ConnectorHelper.sendShort(self._socket, 0b000000000100_1_011)
+				ConnectorHelper.sendString(self._socket, reply)
 			elif msg == 0b000000000101_0_011:
 				pos = ConnectorHelper.readPosition(client_socket)
 				self._printer(f"Breaking block at {pos}...")

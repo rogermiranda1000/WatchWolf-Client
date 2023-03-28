@@ -122,15 +122,15 @@ class MineflayerClient(MinecraftClient):
 		self._bot.chat(msg)
 		
 	def send_command(self, cmd: str, timeout: int) -> str:
-        # new command -> new reply (empty the queue)
+		# new command -> new reply (empty the queue)
 		self._cmd_return_lock.acquire()
 		self._cmd_return = []
 		self._cmd_return_lock.release()
 
 		self._bot.chat(f"/{cmd}")
 
-        # we'll be waiting for <timeout>ms for a response, unless we get data and
-        # then got nothing during <TIMEOUT_BETWEEN_MESSAGESS>ms
+		# we'll be waiting for <timeout>ms for a response, unless we get data and
+		# then got nothing during <TIMEOUT_BETWEEN_MESSAGESS>ms
 		sent_at = datetime.datetime.now()
 		previous_lenght = 0
 		while (datetime.datetime.now() - sent_at).total_seconds() * 1000 < timeout:
