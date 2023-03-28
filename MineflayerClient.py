@@ -15,6 +15,7 @@ import socket
 from threading import Thread, Lock
 from math import ceil
 from time import sleep
+import datetime
 
 from javascript import require, On, Once, console
 mineflayer = require('mineflayer', 'latest')
@@ -30,6 +31,8 @@ login_timeout_sec = 120
 packet_timeout_sec = 120
 
 class MineflayerClient(MinecraftClient):
+	TIMEOUT_BETWEEN_MESSAGESS = 400
+    
 	def __init__(self, host: str, port: int, username: str, assigned_port: int, on_client_connected: OnClientConnected, on_client_disconnected: OnClientDisconnected):
 		super().__init__(host, port, username)
 		self._printer = lambda msg,username=username,host=host,port=port : print(f"[{username} - {host}:{str(port)}] {msg}")
@@ -48,6 +51,9 @@ class MineflayerClient(MinecraftClient):
 
 			"checkTimeoutInterval": packet_timeout_sec * 1000
 		})
+        
+		self._cmd_return_lock = Lock()
+		self._cmd_return = []
 		
 		# add-ons
 		self._bot.loadPlugin(pathfinder)
@@ -83,6 +89,13 @@ class MineflayerClient(MinecraftClient):
 		@On(self._bot, "chat")
 		def handle(_, username, message, *args):
 			self._connector.message_received(username, message)
+            
+		@On(self._bot, "message")
+		def message(_, message, position, *args):
+			if position != "system": return # we expect returns to commands; ignore other things
+			self._cmd_return_lock.acquire()
+			self._cmd_return.append(message.toString())
+			self._cmd_return_lock.release()
 	
 	def __del__(self):
 		pass # TODO stop socket server
@@ -108,9 +121,34 @@ class MineflayerClient(MinecraftClient):
 	def send_message(self, msg: str):
 		self._bot.chat(msg)
 		
-	def send_command(self, cmd: str):
+	def send_command(self, cmd: str, timeout: int) -> str:
+		# new command -> new reply (empty the queue)
+		self._cmd_return_lock.acquire()
+		self._cmd_return = []
+		self._cmd_return_lock.release()
+
 		self._bot.chat(f"/{cmd}")
-	
+
+		# we'll be waiting for <timeout>ms for a response, unless we get data and
+		# then got nothing during <TIMEOUT_BETWEEN_MESSAGESS>ms
+		sent_at = datetime.datetime.now()
+		previous_lenght = 0
+		while (datetime.datetime.now() - sent_at).total_seconds() * 1000 < timeout:
+			self._cmd_return_lock.acquire()
+			current_lenght = len(self._cmd_return)
+			self._cmd_return_lock.release()
+
+			if current_lenght > 0 and current_lenght == previous_lenght:
+				break # TIMEOUT_BETWEEN_MESSAGESS has passed, and no new messages had been readed
+
+			previous_lenght = current_lenght
+			sleep(MineflayerClient.TIMEOUT_BETWEEN_MESSAGESS / 1000)
+
+		self._cmd_return_lock.acquire()
+		r = '\n'.join(self._cmd_return)
+		self._cmd_return_lock.release()
+		return r
+        
 	@staticmethod
 	def _pos_to_vec3(pos: Position) -> Vec3:
 		# 10.5 -> 10; -27.5 -> -28
@@ -175,11 +213,11 @@ class MineflayerClient(MinecraftClient):
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/docs/api.md#botattackentity-swing--true
 	# @ref https://github.com/PrismarineJS/prismarine-entity#entityid
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/trader.js#L49
-	def attack(self, entity: Entity):
+	def attack(self, uuid: str):
 		entities = [self._bot.entities[id] for id in self._bot.entities] # Python equivalent of `Object.keys(self._bot.entities).map(id => self._bot.entities[id])`
-		match = next((e for e in entities if e.uuid == entity.uuid), None)
+		match = next((e for e in entities if e.uuid == uuid), None)
 		if match != None:
 			self._bot.attack(match)
 			sleep(2) # TODO is attack async?
 		else:
-			self._printer(f"Entity with uuid={entity.uuid} not found nearby")
+			self._printer(f"Entity with uuid={uuid} not found nearby")

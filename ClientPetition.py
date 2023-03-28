@@ -9,7 +9,7 @@ class ClientPetition:
 	def send_message(self, msg: str):
 		pass
 		
-	def send_command(self, cmd: str):
+	def send_command(self, cmd: str, timeout: int) -> str:
 		pass
 	
 	def break_block(self, block: Position):
@@ -36,5 +36,5 @@ class ClientPetition:
 	def use(self):
 		pass
 
-	def attack(self, entity: Entity):
+	def attack(self, uuid: str):
 		pass
