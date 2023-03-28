@@ -36,5 +36,5 @@ class ClientPetition:
 	def use(self):
 		pass
 
-	def attack(self, entity: Entity):
+	def attack(self, uuid: str):
 		pass

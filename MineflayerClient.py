@@ -175,11 +175,11 @@ class MineflayerClient(MinecraftClient):
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/docs/api.md#botattackentity-swing--true
 	# @ref https://github.com/PrismarineJS/prismarine-entity#entityid
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/trader.js#L49
-	def attack(self, entity: Entity):
+	def attack(self, uuid: str):
 		entities = [self._bot.entities[id] for id in self._bot.entities] # Python equivalent of `Object.keys(self._bot.entities).map(id => self._bot.entities[id])`
-		match = next((e for e in entities if e.uuid == entity.uuid), None)
+		match = next((e for e in entities if e.uuid == uuid), None)
 		if match != None:
 			self._bot.attack(match)
 			sleep(2) # TODO is attack async?
 		else:
-			self._printer(f"Entity with uuid={entity.uuid} not found nearby")
+			self._printer(f"Entity with uuid={uuid} not found nearby")

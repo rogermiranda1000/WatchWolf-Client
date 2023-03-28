@@ -68,9 +68,9 @@ class ClientConnector(OnMessage):
 				self._printer(f"Placing current block at {pos}...")
 				self._petition_handler.place_block(pos)
 			elif msg == 0b000000001101_0_011:
-				entity = ConnectorHelper.readEntity(client_socket)
-				self._printer(f"Hitting entity with uuid={entity.uuid}...")
-				self._petition_handler.attack(entity)
+				uuid = ConnectorHelper.readString(client_socket)
+				self._printer(f"Hitting entity with uuid={uuid}...")
+				self._petition_handler.attack(uuid)
 			else:
 				self._printer("Unknown request: " + str(msg))
 		self._socket = None # socket closed
