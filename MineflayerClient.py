@@ -108,8 +108,10 @@ class MineflayerClient(MinecraftClient):
 	def send_message(self, msg: str):
 		self._bot.chat(msg)
 		
-	def send_command(self, cmd: str):
+	def send_command(self, cmd: str) -> str:
 		self._bot.chat(f"/{cmd}")
+        # TODO get result
+        return ""
 	
 	@staticmethod
 	def _pos_to_vec3(pos: Position) -> Vec3:

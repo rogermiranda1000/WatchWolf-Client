@@ -9,7 +9,7 @@ class ClientPetition:
 	def send_message(self, msg: str):
 		pass
 		
-	def send_command(self, cmd: str):
+	def send_command(self, cmd: str) -> str:
 		pass
 	
 	def break_block(self, block: Position):
