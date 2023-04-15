@@ -1,4 +1,4 @@
-# WatchWolf - MC Client
+# WatchWolf - Client & Clients Manager [![CodeFactor](https://www.codefactor.io/repository/github/rogermiranda1000/watchwolf-client/badge/dev)](https://www.codefactor.io/repository/github/rogermiranda1000/watchwolf-client/overview/dev)
 A Python library to test Minecraft Plugins in the client side.
 
 ## Dependencies
