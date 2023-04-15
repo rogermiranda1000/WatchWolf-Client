@@ -1,5 +1,5 @@
 # WatchWolf - Client & Clients Manager [![CodeFactor](https://www.codefactor.io/repository/github/rogermiranda1000/watchwolf-client/badge/dev)](https://www.codefactor.io/repository/github/rogermiranda1000/watchwolf-client/overview/dev)
-A Python library to test Minecraft Plugins in the client side.
+A Python library to test Minecraft Plugins in the client side. For more information about WatchWolf check the [WatchWolf website](https://watchwolf.dev/).
 
 ## Dependencies
 - [Docker](https://www.docker.com/get-started/)
