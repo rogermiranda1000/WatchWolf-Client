@@ -200,6 +200,7 @@ class MineflayerClient(MinecraftClient):
 		
 	def look_at(self, pitch: float, yaw: float):
 		self._bot.look(yaw, pitch, True) # look transition-free
+		sleep(0.5) # give the bot some time to look
 	
 	def hit(self):
 		looking_at = self._bot.blockAtCursor(MineflayerClient.MAX_DISTANCE_MINE_BLOCKS)
