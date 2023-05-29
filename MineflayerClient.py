@@ -13,7 +13,7 @@ from entities.Entity import Entity
 
 import socket
 from threading import Thread, Lock
-from math import ceil
+from math import ceil, radians
 from time import sleep
 import datetime
 
@@ -199,7 +199,7 @@ class MineflayerClient(MinecraftClient):
 		self._bot.pathfinder.goto(goal)
 		
 	def look_at(self, pitch: float, yaw: float):
-		self._bot.look(yaw, pitch, True) # look transition-free
+		self._bot.look(radians(yaw), radians(pitch), True) # look transition-free
 		sleep(0.5) # give the bot some time to look
 	
 	def hit(self):
