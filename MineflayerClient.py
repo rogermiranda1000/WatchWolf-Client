@@ -201,7 +201,22 @@ class MineflayerClient(MinecraftClient):
 		self._bot.look(yaw, pitch, True) # look transition-free
 	
 	def hit(self):
-		self._bot.swingArm() # TODO attack
+		looking_at = self._bot.blockAtCursor(MineflayerClient.MAX_DISTANCE_MINE_BLOCKS)
+		if looking_at is None:
+			self._bot.swingArm()
+		else:
+			def stop_digging():
+				# TODO sync issue here: what if the bot digs after `stopDigging`?
+				sleep(0.2)
+				self._bot.stopDigging() 
+
+			thread = Thread(target = stop_digging)
+			thread.start()
+			try:
+				self._bot.dig(looking_at)
+			except Exception:
+				pass # digging aborted exception
+			thread.join()
 	
 	# @ref https://github.com/PrismarineJS/mineflayer/issues/421
 	# @ref https://github.com/PrismarineJS/mineflayer/issues/766
