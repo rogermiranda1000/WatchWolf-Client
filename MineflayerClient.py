@@ -199,7 +199,9 @@ class MineflayerClient(MinecraftClient):
 		self._bot.pathfinder.goto(goal)
 		
 	def look_at(self, pitch: float, yaw: float):
-		self._bot.look(radians(yaw), radians(pitch), True) # look transition-free
+		yaw = radians(yaw) # number of radians to rotate around the vertical axis, starting from the east. Counter clockwise.
+		pitch = radians(-pitch) # in radians; 0 means straight forward. pi / 2 means straight up. -pi / 2 means straight down (the opposite way as MC does)
+		self._bot.look(yaw, pitch, True) # look transition-free
 		sleep(0.5) # give the bot some time to look
 	
 	def hit(self):
