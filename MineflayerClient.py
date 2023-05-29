@@ -31,6 +31,7 @@ login_timeout_sec = 120
 packet_timeout_sec = 120
 
 class MineflayerClient(MinecraftClient):
+	MAX_DISTANCE_MINE_BLOCKS = 4
 	TIMEOUT_BETWEEN_MESSAGESS = 400
     
 	def __init__(self, host: str, port: int, username: str, assigned_port: int, on_client_connected: OnClientConnected, on_client_disconnected: OnClientDisconnected):
