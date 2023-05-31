@@ -40,7 +40,9 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 		port = self.get_min_id()
 		sleep(8) # @ref https://github.com/PrismarineJS/mineflayer/issues/2749
 		client = self._client_builder(username, ip[0], int(ip[1]), port, self, self)
+		self._thread_lock.acquire()
 		self._client_list[port] = client
+		self._thread_lock.release()
 		
 		# wait for client_connected signal
 		# TODO move as anync message
@@ -63,8 +65,11 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 	
 	def get_min_id(self) -> int:
 		current_port = self._base_port
+		self._thread_lock.acquire()
 		while (current_port in self._client_list):
 			current_port += 1
+		self._client_list[current_port] = None # reserve the port
+		self._thread_lock.release()
 		return current_port
 
 if __name__ == '__main__':
