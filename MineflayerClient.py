@@ -159,10 +159,11 @@ class MineflayerClient(MinecraftClient):
 		filter = (i for i in self._bot.inventory.items() if i.name == item.type.name.lower() and i.count == item.amount)
 
 		found = next(filter, None)
-
-		if found is None:
-			# try again, this time without the item ammount
-			filter = (i for i in self._bot.inventory.items() if i.name == item.type.name.lower())
+		if found is not None:
+			return found
+		
+		# try again, this time without the item ammount
+		filter = (i for i in self._bot.inventory.items() if i.name == item.type.name.lower())
 
 		return next(filter, None) # get the first item that matches (None if none)
 	
