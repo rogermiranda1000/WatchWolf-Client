@@ -68,6 +68,7 @@ class MineflayerClient(MinecraftClient):
 		@On(self._bot, "spawn")
 		def spawn(_):
 			self._viewer = MineflayerViewer(port=self._port+1)
+			self._viewer.setup(self._bot)
 		
 		@On(self._bot, "login")
 		def login(_):
@@ -107,7 +108,7 @@ class MineflayerClient(MinecraftClient):
 			self._cmd_return_lock.release()
 	
 	def __del__(self):
-		pass # TODO stop socket server
+		pass # TODO stop socket server and viewer
 	
 	def _login_timeout(self):
 		if self._client_connected_listener != None:

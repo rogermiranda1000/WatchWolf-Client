@@ -3,14 +3,14 @@
 
 import threading
 import socket # for the video stream
-import ImageList
-import Viewer
+from .ImageList import ImageList
+from .Viewer import Viewer
 from typing import Tuple
 
 from javascript import require
 mineflayerViewer = require('prismarine-viewer').headless
 
-class BotViewer(threading.Thread,Viewer):
+class MineflayerViewer(threading.Thread,Viewer):
 	def __init__(self, port: int, size: Tuple[int,int] = (512, 512)):
 		threading.Thread.__init__(self)
 		Viewer.__init__(self, size)
@@ -32,8 +32,8 @@ class BotViewer(threading.Thread,Viewer):
 
 		self._close = False
 		while not self._close: # TODO sync
-			length = BotViewer.recvint(self._conn)
-			stringData = BotViewer.recvall(self._conn, int(length))
+			length = MineflayerViewer.recvint(self._conn)
+			stringData = MineflayerViewer.recvall(self._conn, int(length))
 			self._images.append(stringData)
 
 		print("[v] Terminating video socket connection...")
@@ -46,7 +46,10 @@ class BotViewer(threading.Thread,Viewer):
 		return self._images.start_recording()
 	
 	def stop_recording(self, id: int, out: str):
-		self._images.stop_recording(id, out)
+		try:
+			self._images.stop_recording(id, out)
+		except Exception as ex:
+			print(f"[e] {ex}")
 
 	@staticmethod
 	def recvall(sock, count):
@@ -60,4 +63,4 @@ class BotViewer(threading.Thread,Viewer):
 
 	@staticmethod
 	def recvint(sock):
-		return int.from_bytes(BotViewer.recvall(sock, 4), byteorder='little')
+		return int.from_bytes(MineflayerViewer.recvall(sock, 4), byteorder='little')
