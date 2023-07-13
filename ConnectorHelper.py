@@ -7,6 +7,7 @@ from ItemType import ItemType
 from entities.EntityType import EntityType
 from entities.Entity import Entity
 
+import os
 from struct import unpack
 
 class ConnectorHelper:
@@ -84,3 +85,25 @@ class ConnectorHelper:
 		ConnectorHelper.sendDouble(socket, pos.x)
 		ConnectorHelper.sendDouble(socket, pos.y)
 		ConnectorHelper.sendDouble(socket, pos.z)
+	
+	@staticmethod
+	def sendFile(socket, path: str):
+		ConnectorHelper.sendString(socket, path) # TODO get only the file name, not the full path
+		ConnectorHelper.sendString(socket, './')
+
+		# size
+		size = os.stat(path).st_size
+		llsb = bytes([size & 0b11111111])
+		mlsb = bytes([(size >> 8) & 0b11111111])
+		lmsb = bytes([(size >> 16) & 0b11111111])
+		mmsb = bytes([(size >> 24) & 0b11111111])
+		socket.sendall(b''.join([llsb, mlsb, lmsb, mmsb]))
+
+		# file data
+		BUFFER_SIZE = 1024
+		with open(path, "rb") as f:
+			while True:
+				bytes_read = f.read(BUFFER_SIZE)
+				if not bytes_read:
+					break
+				socket.sendall(bytes_read)

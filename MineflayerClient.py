@@ -10,6 +10,8 @@ from OnClientDisconnected import OnClientDisconnected
 from Position import Position
 from Item import Item
 from entities.Entity import Entity
+from view.Viewer import Viewer
+from view.MineflayerViewer import MineflayerViewer
 
 import socket
 from threading import Thread, Lock
@@ -36,10 +38,12 @@ class MineflayerClient(MinecraftClient):
     
 	def __init__(self, host: str, port: int, username: str, assigned_port: int, on_client_connected: OnClientConnected, on_client_disconnected: OnClientDisconnected):
 		super().__init__(host, port, username)
+		self._port = port
 		self._printer = lambda msg,username=username,host=host,port=port : print(f"[{username} - {host}:{str(port)}] {msg}")
 		self._connector = ClientConnector(self, assigned_port, self._printer)
 		self._client_connected_listener = on_client_connected
 		self._client_disconnected_listener = on_client_disconnected
+		self._viewer = None
 		
 		self._thread_lock = Lock()
 		self._timedout = None
@@ -60,6 +64,10 @@ class MineflayerClient(MinecraftClient):
 		self._bot.loadPlugin(pathfinder)
 		
 		Thread(target = self._connector.run, args = ()).start()
+		
+		@On(self._bot, "spawn")
+		def spawn(_):
+			self._viewer = MineflayerViewer(port=self._port+1)
 		
 		@On(self._bot, "login")
 		def login(_):
@@ -251,3 +259,13 @@ class MineflayerClient(MinecraftClient):
 			sleep(2) # TODO is attack async?
 		else:
 			self._printer(f"Entity with uuid={uuid} not found nearby")
+	
+	def start_recording(self) -> int:
+		if self._viewer is None: return -1 # error
+		
+		return self._viewer.start_recording()
+
+	def stop_recording(self, id: int, out: str):
+		if self._viewer is None: return # error
+		
+		self._viewer.stop_recording(id, out)

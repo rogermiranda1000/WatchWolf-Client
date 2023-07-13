@@ -3,6 +3,11 @@
 
 import socket
 
+# view file
+import os
+import random
+import string
+
 from ConnectorHelper import ConnectorHelper
 from OnMessage import OnMessage
 from ClientPetition import ClientPetition
@@ -77,6 +82,21 @@ class ClientConnector(OnMessage):
 				uuid = ConnectorHelper.readString(client_socket)
 				self._printer(f"Hitting entity with uuid={uuid}...")
 				self._petition_handler.attack(uuid)
+			elif msg == 0b000000001111_0_011:
+				camera_id = self._petition_handler.start_recording()
+				self._printer(f"Starting recording (id {camera_id})")
+				# response
+				ConnectorHelper.sendShort(client_socket, 0b000000001111_1_011)
+				ConnectorHelper.sendShort(client_socket, camera_id)
+			elif msg == 0b000000010000_0_011:
+				camera_id = ConnectorHelper.readShort(client_socket)
+				self._printer(f"Stopping recording {camera_id}")
+				file_name = ClientConnector._random_mp4()
+				self._petition_handler.stop_recording(camera_id, file_name)
+				# response
+				ConnectorHelper.sendShort(client_socket, 0b000000010000_1_011)
+				ConnectorHelper.sendFile(client_socket, file_name)
+				os.remove(file_name)
 			else:
 				self._printer("Unknown request: " + str(msg))
 		self._socket = None # socket closed
@@ -88,3 +108,7 @@ class ClientConnector(OnMessage):
 		ConnectorHelper.sendShort(self._socket, 0b000000000011_1_011)
 		ConnectorHelper.sendString(self._socket, username)
 		ConnectorHelper.sendString(self._socket, msg)
+
+	@staticmethod
+	def _random_mp4(size: int = 15) -> str:
+		return ''.join(random.choice(string.ascii_letters) for x in range(size)) + '.mp4'
