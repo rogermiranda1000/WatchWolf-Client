@@ -17,6 +17,7 @@ class MineflayerViewer(threading.Thread,Viewer):
 		
 		self._port = port
 		self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self._socket.bind(("127.0.0.1", port))
 		self._socket.listen(10)
 
@@ -43,7 +44,14 @@ class MineflayerViewer(threading.Thread,Viewer):
 
 	def close(self):
 		self._close = True # TODO sync
-		self._client_socket.destroy() # close the mineflayerViewer socket connection
+
+		# close the mineflayerViewer socket connection
+		# mineflayerViewer listens for @On('end') and closes the connection
+		self._client_socket.end()
+		self._client_socket.destroy()
+
+		self._socket.shutdown(socket.SHUT_RDWR)
+		self._socket.close()
 
 	def start_recording(self) -> int:
 		return self._images.start_recording()
