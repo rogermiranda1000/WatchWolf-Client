@@ -18,6 +18,7 @@ class ClientConnector(OnMessage):
 		self._port = port
 		self._printer = printer
 		self._socket = None
+		self._closed = False
 	
 	def run(self):
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,10 +29,10 @@ class ClientConnector(OnMessage):
 		(client_socket, address) = self.socket.accept() # TODO send address to the Client so it only replies to that one
 		
 		self._socket = client_socket
-		while True:
+		while not self._closed: # TODO sync
 			try:
 				msg = ConnectorHelper.readShort(client_socket)
-			except IndexError:
+			except Exception:
 				break # socket closed
 				
 			if msg == 0b000000000011_0_011:
@@ -101,6 +102,10 @@ class ClientConnector(OnMessage):
 				self._printer("Unknown request: " + str(msg))
 		self._socket = None # socket closed
 	
+	def close(self):
+		self._closed = True # TODO sync
+		self.socket.close()
+
 	def message_received(self, username: str, msg: str):
 		if self._socket == None:
 			return # no one to send

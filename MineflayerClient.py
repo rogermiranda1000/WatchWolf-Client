@@ -63,11 +63,12 @@ class MineflayerClient(MinecraftClient):
 		# add-ons
 		self._bot.loadPlugin(pathfinder)
 		
-		Thread(target = self._connector.run, args = ()).start()
+		self._connector_thread = Thread(target = self._connector.run, args = ())
+		self._connector_thread.start()
 		
 		@On(self._bot, "spawn")
 		def spawn(_):
-			self._viewer = MineflayerViewer(port=self._port+1)
+			self._viewer = MineflayerViewer(port=self._port+1, printer=self._printer)
 			self._viewer.setup(self._bot)
 		
 		@On(self._bot, "login")
@@ -93,8 +94,9 @@ class MineflayerClient(MinecraftClient):
 				self._client_connected_listener.client_connected(self)
 			
 		@On(self._bot, "end")
-		def end(_, reason): # TODO is it really the reason?
-			print("Bot ended: " + reason)
+		def end(_, reason):
+			self._printer("Bot ended: " + reason)
+			self.close()
 		
 		@On(self._bot, "chat")
 		def handle(_, username, message, *args):
@@ -107,8 +109,14 @@ class MineflayerClient(MinecraftClient):
 			self._cmd_return.append(message.toString())
 			self._cmd_return_lock.release()
 	
-	def __del__(self):
-		pass # TODO stop socket server and viewer
+	def close(self):
+		if self._viewer is not None:
+			self._viewer.close()
+
+		self._connector.close()
+		self._connector_thread.join()
+
+		self._client_disconnected_listener.client_disconnected(self) # TODO stop socket server and viewer
 	
 	def _login_timeout(self):
 		if self._client_connected_listener != None:

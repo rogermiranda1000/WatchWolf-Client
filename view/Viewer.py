@@ -4,8 +4,9 @@
 from typing import Tuple
 
 class Viewer:
-	def __init__(self, size: Tuple[int,int] = (512, 512)):
+	def __init__(self, size: Tuple[int,int] = (512, 512), printer = lambda msg: print(msg)):
 		self._size = size
+		self._printer = printer
 
 	def setup(self, bot):
 		pass

@@ -33,7 +33,10 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 		self._thread_lock.release()
 		
 	def client_disconnected(self, client: MinecraftClient):
-		pass # TODO remove [syncronized] client from self._client_list
+		self._thread_lock.acquire()
+		port = [k for k, v in self._client_list.items() if v == client][0]
+		del self._client_list[port]
+		self._thread_lock.release()
 	
 	def start_client(self, username: str, server_ip: str, public_access: bool = False) -> str:
 		ip = server_ip.split(":")

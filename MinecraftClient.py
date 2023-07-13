@@ -13,3 +13,7 @@ class MinecraftClient(ClientPetition): # every client implements ClientPetition
 	@property
 	def server(self) -> str:
 		return self._server_ip + ":" + str(self._server_port)
+
+	@property
+	def port(self) -> int:
+		return self._server_port

@@ -11,9 +11,9 @@ from javascript import require
 mineflayerViewer = require('prismarine-viewer').headless
 
 class MineflayerViewer(threading.Thread,Viewer):
-	def __init__(self, port: int, size: Tuple[int,int] = (512, 512)):
+	def __init__(self, port: int, size: Tuple[int,int] = (512, 512), printer = lambda msg: print(msg)):
 		threading.Thread.__init__(self)
-		Viewer.__init__(self, size)
+		Viewer.__init__(self, size, printer)
 		
 		self._port = port
 		self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -23,24 +23,27 @@ class MineflayerViewer(threading.Thread,Viewer):
 		self._images = ImageList()
 
 	def setup(self, bot):
-		mineflayerViewer(bot, { 'output': '127.0.0.1:' + str(self._port), 'frames': -1, 'width': self._size[0], 'height': self._size[1], 'firstPerson': True })
+		self._bot = bot
+		self._client_socket = mineflayerViewer(self._bot, { 'output': '127.0.0.1:' + str(self._port), 'frames': -1, 'width': self._size[0], 'height': self._size[1], 'firstPerson': True })
 		self.start()
 
 	def run(self):
-		print("[v] Starting video thread...")
+		self._printer("[v] Starting video thread...")
 		self._conn, _ = self._socket.accept()
 
 		self._close = False
 		while not self._close: # TODO sync
 			length = MineflayerViewer.recvint(self._conn)
+			if length is None: break # closed connection
 			stringData = MineflayerViewer.recvall(self._conn, int(length))
 			self._images.append(stringData)
 
-		print("[v] Terminating video socket connection...")
+		self._printer("[v] Terminating video socket connection...")
 
 
 	def close(self):
 		self._close = True # TODO sync
+		self._client_socket.destroy() # close the mineflayerViewer socket connection
 
 	def start_recording(self) -> int:
 		return self._images.start_recording()
@@ -49,7 +52,7 @@ class MineflayerViewer(threading.Thread,Viewer):
 		try:
 			self._images.stop_recording(id, out)
 		except Exception as ex:
-			print(f"[e] {ex}")
+			self._printer(f"[e] {ex}")
 
 	@staticmethod
 	def recvall(sock, count):
@@ -62,5 +65,7 @@ class MineflayerViewer(threading.Thread,Viewer):
 		return buf
 
 	@staticmethod
-	def recvint(sock):
-		return int.from_bytes(MineflayerViewer.recvall(sock, 4), byteorder='little')
+	def recvint(sock) -> int:
+		bytes_read = MineflayerViewer.recvall(sock, 4)
+		if bytes_read is None: return None
+		return int.from_bytes(bytes_read, byteorder='little')
