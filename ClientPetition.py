@@ -38,3 +38,9 @@ class ClientPetition:
 
 	def attack(self, uuid: str):
 		pass
+
+	def start_recording(self) -> int:
+		pass
+
+	def stop_recording(self, id: int, out: str):
+		pass

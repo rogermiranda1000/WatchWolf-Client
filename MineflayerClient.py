@@ -10,6 +10,8 @@ from OnClientDisconnected import OnClientDisconnected
 from Position import Position
 from Item import Item
 from entities.Entity import Entity
+from view.Viewer import Viewer
+from view.MineflayerViewer import MineflayerViewer
 
 import socket
 from threading import Thread, Lock
@@ -36,10 +38,12 @@ class MineflayerClient(MinecraftClient):
     
 	def __init__(self, host: str, port: int, username: str, assigned_port: int, on_client_connected: OnClientConnected, on_client_disconnected: OnClientDisconnected):
 		super().__init__(host, port, username)
+		self._port = port
 		self._printer = lambda msg,username=username,host=host,port=port : print(f"[{username} - {host}:{str(port)}] {msg}")
 		self._connector = ClientConnector(self, assigned_port, self._printer)
 		self._client_connected_listener = on_client_connected
 		self._client_disconnected_listener = on_client_disconnected
+		self._viewer = None
 		
 		self._thread_lock = Lock()
 		self._timedout = None
@@ -59,7 +63,13 @@ class MineflayerClient(MinecraftClient):
 		# add-ons
 		self._bot.loadPlugin(pathfinder)
 		
-		Thread(target = self._connector.run, args = ()).start()
+		self._connector_thread = Thread(target = self._connector.run, args = ())
+		self._connector_thread.start()
+		
+		@On(self._bot, "spawn")
+		def spawn(_):
+			self._viewer = MineflayerViewer(bot=self._bot, port=self._port+1, printer=self._printer)
+			self._viewer.setup()
 		
 		@On(self._bot, "login")
 		def login(_):
@@ -84,8 +94,9 @@ class MineflayerClient(MinecraftClient):
 				self._client_connected_listener.client_connected(self)
 			
 		@On(self._bot, "end")
-		def end(_, reason): # TODO is it really the reason?
-			print("Bot ended: " + reason)
+		def end(_, reason):
+			self._printer("Bot ended: " + reason)
+			self.close()
 		
 		@On(self._bot, "chat")
 		def handle(_, username, message, *args):
@@ -98,8 +109,14 @@ class MineflayerClient(MinecraftClient):
 			self._cmd_return.append(message.toString())
 			self._cmd_return_lock.release()
 	
-	def __del__(self):
-		pass # TODO stop socket server
+	def close(self):
+		if self._viewer is not None:
+			self._viewer.close()
+
+		self._connector.close()
+		self._connector_thread.join()
+
+		self._client_disconnected_listener.client_disconnected(self) # TODO stop socket server and viewer
 	
 	def _login_timeout(self):
 		if self._client_connected_listener != None:
@@ -251,3 +268,13 @@ class MineflayerClient(MinecraftClient):
 			sleep(2) # TODO is attack async?
 		else:
 			self._printer(f"Entity with uuid={uuid} not found nearby")
+	
+	def start_recording(self) -> int:
+		if self._viewer is None: return -1 # error
+		
+		return self._viewer.start_recording()
+
+	def stop_recording(self, id: int, out: str):
+		if self._viewer is None: return # error
+		
+		self._viewer.stop_recording(id, out)

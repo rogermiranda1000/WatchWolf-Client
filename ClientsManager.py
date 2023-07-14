@@ -33,7 +33,10 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 		self._thread_lock.release()
 		
 	def client_disconnected(self, client: MinecraftClient):
-		pass # TODO remove [syncronized] client from self._client_list
+		self._thread_lock.acquire()
+		port = [k for k, v in self._client_list.items() if v == client][0]
+		del self._client_list[port]
+		self._thread_lock.release()
 	
 	def start_client(self, username: str, server_ip: str, public_access: bool = False) -> str:
 		ip = server_ip.split(":")
@@ -67,7 +70,7 @@ class ClientsManager(ClientsManagerPetition, OnClientConnected, OnClientDisconne
 		current_port = self._base_port
 		self._thread_lock.acquire()
 		while (current_port in self._client_list):
-			current_port += 1
+			current_port += 2 # each client has 2 ports (one for the connector, the other for the images)
 		self._client_list[current_port] = None # reserve the port
 		self._thread_lock.release()
 		return current_port

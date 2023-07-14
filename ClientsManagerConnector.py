@@ -30,7 +30,12 @@ class ClientsManagerConnector:
 	
 	def _client_manager(self, socket, public_access: bool):
 		while True:
-			msg = ConnectorHelper.readShort(socket)
+			msg = None
+			try:
+				msg = ConnectorHelper.readShort(socket)
+			except Exception:
+				break # socket closed
+
 			if msg == 0b000000000001_0_010:
 				# start client petition
 				username = ConnectorHelper.readString(socket)
