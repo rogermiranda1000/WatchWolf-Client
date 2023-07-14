@@ -8,7 +8,7 @@ class Viewer:
 		self._size = size
 		self._printer = printer
 
-	def setup(self, bot):
+	def setup(self):
 		pass
 	
 	def close(self):

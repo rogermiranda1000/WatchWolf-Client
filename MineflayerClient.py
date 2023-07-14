@@ -68,8 +68,8 @@ class MineflayerClient(MinecraftClient):
 		
 		@On(self._bot, "spawn")
 		def spawn(_):
-			self._viewer = MineflayerViewer(port=self._port+1, printer=self._printer)
-			self._viewer.setup(self._bot)
+			self._viewer = MineflayerViewer(bot=self._bot, port=self._port+1, printer=self._printer)
+			self._viewer.setup()
 		
 		@On(self._bot, "login")
 		def login(_):
