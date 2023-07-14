@@ -28,7 +28,9 @@ class ConnectorHelper:
 	
 	@staticmethod
 	def readShort(socket) -> int:
-		lsb = int(socket.recv(1)[0])
+		first = socket.recv(1)
+		if not first: raise Exception("Socket closed")
+		lsb = int(first[0])
 		msb = int(socket.recv(1)[0])
 		return (msb<<8) | lsb
 	
