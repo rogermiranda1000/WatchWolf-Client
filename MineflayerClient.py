@@ -72,8 +72,6 @@ class MineflayerClient(MinecraftClient):
 		
 		@On(self._bot, "spawn")
 		def spawn(_):
-			self._watchwolf_item_to_mineflayer = MinecraftClient._get_watchwolf_to_mineflayer(self._bot.version)
-
 			self._viewer = MineflayerViewer(bot=self._bot, port=self._port+1, printer=self._printer)
 			self._viewer.setup()
 		
@@ -88,6 +86,9 @@ class MineflayerClient(MinecraftClient):
 			self._thread_lock.release()
 			
 			print(self._username + " connected to the server (" + self.server + ")")
+
+			# WatchWolf to Mineflayer initialization
+			self._watchwolf_item_to_mineflayer = MineflayerClient._get_watchwolf_to_mineflayer(self._bot.version)
 			
 			# pathfinder initialization
 			defaultMove = Movements(self._bot)
@@ -125,9 +126,9 @@ class MineflayerClient(MinecraftClient):
 			items = json.load(f)
 		
 		for item in items:
-			alias = MinecraftClient._get_alias(item, base_version)["name"]
+			alias = MineflayerClient._get_alias(item, base_version)
 			if alias is not None:
-				conversion[item["name"].upper()] = alias
+				conversion[item["name"].upper()] = alias["name"]
 				
 		return conversion
 
@@ -206,8 +207,11 @@ class MineflayerClient(MinecraftClient):
 	def _find_item_in_player(self, item: Item): # TODO return type hint
 		try:
 			searching_for = self._watchwolf_item_to_mineflayer[item.type.name]
+			#if searching_for != item.type.name.lower(): self._printer(f"[v] Request {item.type.name} item, found a different name: {searching_for}")
 		except KeyError:
+			self._printer(f"[w] Request {item.type.name} item, got none")
 			return None # this item doesn't exist in this version
+		
 		filter = (i for i in self._bot.inventory.items() if i.name == searching_for and i.count == item.amount)
 
 		found = next(filter, None)
