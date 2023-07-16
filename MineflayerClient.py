@@ -8,7 +8,8 @@ from OnClientConnected import OnClientConnected
 from OnClientDisconnected import OnClientDisconnected
 
 from Position import Position
-from Item import Item
+from items.Item import Item
+from items.ItemType import ITEMS_FILE_PATH
 from entities.Entity import Entity
 from view.Viewer import Viewer
 from view.MineflayerViewer import MineflayerViewer
@@ -18,6 +19,8 @@ from threading import Thread, Lock
 from math import ceil, radians
 from time import sleep
 import datetime
+from typing import Dict
+import json
 
 from javascript import require, On, Once, console
 mineflayer = require('mineflayer', 'latest')
@@ -43,6 +46,7 @@ class MineflayerClient(MinecraftClient):
 		self._connector = ClientConnector(self, assigned_port, self._printer)
 		self._client_connected_listener = on_client_connected
 		self._client_disconnected_listener = on_client_disconnected
+		self._watchwolf_item_to_mineflayer = None
 		self._viewer = None
 		
 		self._thread_lock = Lock()
@@ -82,6 +86,9 @@ class MineflayerClient(MinecraftClient):
 			self._thread_lock.release()
 			
 			print(self._username + " connected to the server (" + self.server + ")")
+
+			# WatchWolf to Mineflayer initialization
+			self._watchwolf_item_to_mineflayer = MineflayerClient._get_watchwolf_to_mineflayer(self._bot.version)
 			
 			# pathfinder initialization
 			defaultMove = Movements(self._bot)
@@ -108,6 +115,31 @@ class MineflayerClient(MinecraftClient):
 			self._cmd_return_lock.acquire()
 			self._cmd_return.append(message.toString())
 			self._cmd_return_lock.release()
+	
+	@staticmethod
+	def _get_watchwolf_to_mineflayer(version: str) -> Dict[str,str]:
+		base_version = '.'.join([ e for (i,e) in enumerate(version.split('.')) if i<2 ])
+
+		conversion = {}
+		items = None
+		with open(ITEMS_FILE_PATH) as f:
+			items = json.load(f)
+		
+		for item in items:
+			alias = MineflayerClient._get_alias(item, base_version)
+			if alias is not None:
+				conversion[item["name"].upper()] = alias["name"]
+				
+		return conversion
+
+	@staticmethod
+	def _get_alias(item: json, version: str) -> json:
+		for alias in item["aliases"]:
+			versions = [ alias["min-version"], version, alias["max-version"] ]
+			versions.sort(key=lambda s: list(map(int, s.split('.'))))
+			if versions[1] == version:
+				return alias
+		return None
 	
 	def close(self):
 		if self._viewer is not None:
@@ -172,15 +204,22 @@ class MineflayerClient(MinecraftClient):
 		# 10.5 -> 10; -27.5 -> -28
 		return Vec3(-ceil(-pos.x), ceil(pos.y), -ceil(-pos.z)) # TODO world
 	
-	def _find_item_in_player(self, item: Item): # TODO return type
-		filter = (i for i in self._bot.inventory.items() if i.name == item.type.name.lower() and i.count == item.amount)
+	def _find_item_in_player(self, item: Item): # TODO return type hint
+		try:
+			searching_for = self._watchwolf_item_to_mineflayer[item.type.name]
+			#if searching_for != item.type.name.lower(): self._printer(f"[v] Request {item.type.name} item, found a different name: {searching_for}")
+		except KeyError:
+			self._printer(f"[w] Request {item.type.name} item, got none")
+			return None # this item doesn't exist in this version
+		
+		filter = (i for i in self._bot.inventory.items() if i.name == searching_for and i.count == item.amount)
 
 		found = next(filter, None)
 		if found is not None:
 			return found
 		
 		# try again, this time without the item ammount
-		filter = (i for i in self._bot.inventory.items() if i.name == item.type.name.lower())
+		filter = (i for i in self._bot.inventory.items() if i.name == searching_for)
 
 		return next(filter, None) # get the first item that matches (None if none)
 	
