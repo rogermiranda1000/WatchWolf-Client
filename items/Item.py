@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import Any
-from ItemType import ItemType
+from .ItemType import ItemType
 
 class Item:
 	def __init__(self, type: ItemType, amount: int):

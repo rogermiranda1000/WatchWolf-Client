@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from Item import Item
+from items.Item import Item
 from Position import Position
 from entities.Entity import Entity
 
