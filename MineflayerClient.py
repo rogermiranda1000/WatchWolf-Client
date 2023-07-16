@@ -9,6 +9,7 @@ from OnClientDisconnected import OnClientDisconnected
 
 from Position import Position
 from items.Item import Item
+from items.ItemType import ITEMS_FILE_PATH
 from entities.Entity import Entity
 from view.Viewer import Viewer
 from view.MineflayerViewer import MineflayerViewer
@@ -19,7 +20,6 @@ from math import ceil, radians
 from time import sleep
 import datetime
 from typing import Dict
-import os
 import json
 
 from javascript import require, On, Once, console
@@ -118,17 +118,16 @@ class MineflayerClient(MinecraftClient):
 	@staticmethod
 	def _get_watchwolf_to_mineflayer(version: str) -> Dict[str,str]:
 		base_version = '.'.join([ e for (i,e) in enumerate(version.split('.')) if i<2 ])
-		items_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "items/items.json")
 
 		conversion = {}
 		items = None
-		with open(items_file_path) as f:
+		with open(ITEMS_FILE_PATH) as f:
 			items = json.load(f)
 		
 		for item in items:
 			alias = MinecraftClient._get_alias(item, base_version)["name"]
 			if alias is not None:
-				conversion["name"] = alias
+				conversion[item["name"].upper()] = alias
 				
 		return conversion
 
