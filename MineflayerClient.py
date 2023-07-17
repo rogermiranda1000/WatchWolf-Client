@@ -13,6 +13,7 @@ from items.ItemType import ITEMS_FILE_PATH
 from entities.Entity import Entity
 from view.Viewer import Viewer
 from view.MineflayerViewer import MineflayerViewer
+from MinecraftChunkManager import MinecraftChunkManager
 
 import socket
 from threading import Thread, Lock
@@ -48,6 +49,7 @@ class MineflayerClient(MinecraftClient):
 		self._client_disconnected_listener = on_client_disconnected
 		self._watchwolf_item_to_mineflayer = None
 		self._viewer = None
+		self._chunk_manager = MinecraftChunkManager()
 		
 		self._thread_lock = Lock()
 		self._timedout = None
@@ -72,11 +74,6 @@ class MineflayerClient(MinecraftClient):
 		
 		@On(self._bot, "spawn")
 		def spawn(_):
-			self._viewer = MineflayerViewer(bot=self._bot, port=self._port+1, printer=self._printer)
-			self._viewer.setup()
-		
-		@On(self._bot, "login")
-		def login(_):
 			self._thread_lock.acquire()
 			if self._timedout != None:
 				# too late
@@ -95,10 +92,24 @@ class MineflayerClient(MinecraftClient):
 			defaultMove.canDig = False
 			defaultMove.placeCost = 8000
 			self._bot.pathfinder.setMovements(defaultMove)
+
+			# viewer initialization
+			self._viewer = MineflayerViewer(bot=self._bot, port=self._port+1, printer=self._printer)
+			self._viewer.setup()
 			
 			# notify 
 			if self._client_connected_listener != None:
 				self._client_connected_listener.client_connected(self)
+
+		@On(self._bot, "chunkColumnLoad")
+		def chunk_loaded(_, where):
+			(chunk_x,chunk_y) = MinecraftChunkManager.location_to_chunk(where.x,where.z)
+			self._chunk_manager.chunk_loaded(None, chunk_x, chunk_y) # TODO get world
+
+		@On(self._bot, "chunkColumnUnload")
+		def chunk_unloaded(_, where):
+			(chunk_x,chunk_y) = MinecraftChunkManager.location_to_chunk(where.x,where.z)
+			self._chunk_manager.chunk_unloaded(None, chunk_x, chunk_y) # TODO get world
 			
 		@On(self._bot, "end")
 		def end(_, reason):
@@ -204,6 +215,14 @@ class MineflayerClient(MinecraftClient):
 		# 10.5 -> 10; -27.5 -> -28
 		return Vec3(-ceil(-pos.x), ceil(pos.y), -ceil(-pos.z)) # TODO world
 	
+	@staticmethod
+	def _vec3_to_pos(vec: Vec3) -> Position:
+		return Position(None, vec.x, vec.y, vec.z) # TODO get world
+	
+	@property
+	def position(self) -> Position:
+		return MineflayerClient._vec3_to_pos(self._bot.entity.position)
+	
 	def _find_item_in_player(self, item: Item): # TODO return type hint
 		try:
 			searching_for = self._watchwolf_item_to_mineflayer[item.type.name]
@@ -223,8 +242,16 @@ class MineflayerClient(MinecraftClient):
 
 		return next(filter, None) # get the first item that matches (None if none)
 	
+	def _world_sync(self):
+		player_pos = self.position
+		(chunk_x,chunk_z) = MinecraftChunkManager.location_to_chunk(player_pos.x,player_pos.z)
+		if not self._chunk_manager.is_chunk_loaded(player_pos.world, chunk_x, chunk_z):
+			self._printer("[v] Bot in unloaded chunk, waiting...")
+			while not self._chunk_manager.is_chunk_loaded(player_pos.world, chunk_x, chunk_z): sleep(1) # TODO callback onChunkLoaded
+
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/digger.js
 	def break_block(self, block: Position):
+		self._world_sync()
 		target = self._bot.blockAt(MineflayerClient._pos_to_vec3(block))
 		if target and self._bot.canDigBlock(target):
 			try:
@@ -235,6 +262,7 @@ class MineflayerClient(MinecraftClient):
 	
 	def place_block(self, block: Position):
 		try:
+			self._world_sync()
 			# find a block & face to place
 			for offset in [(0,-1,0),(1,0,0),(-1,0,0),(0,0,1),(0,0,-1),(0,1,0)]:
 				base_block_location=MineflayerClient._pos_to_vec3(block+offset)
@@ -259,6 +287,7 @@ class MineflayerClient(MinecraftClient):
 	
 	# @ref https://github.com/PrismarineJS/mineflayer-pathfinder#example
 	def move_to(self, pos: Position):
+		self._world_sync()
 		goal = GoalBlock(pos.x, pos.y, pos.z)
 		self._bot.pathfinder.goto(goal)
 		
@@ -272,6 +301,7 @@ class MineflayerClient(MinecraftClient):
 		sleep(1) # give the bot some time to look
 	
 	def hit(self):
+		self._world_sync()
 		looking_at = self._bot.blockAtCursor(MineflayerClient.MAX_DISTANCE_MINE_BLOCKS)
 		if looking_at is None:
 			self._bot.swingArm()
@@ -292,6 +322,7 @@ class MineflayerClient(MinecraftClient):
 	# @ref https://github.com/PrismarineJS/mineflayer/issues/421
 	# @ref https://github.com/PrismarineJS/mineflayer/issues/766
 	def use(self):
+		self._world_sync()
 		self._bot.activateItem() # TODO useOn, mount, openContainer...
 		sleep(0.1)
 		self._bot.deactivateItem()
@@ -300,6 +331,7 @@ class MineflayerClient(MinecraftClient):
 	# @ref https://github.com/PrismarineJS/prismarine-entity#entityid
 	# @ref https://github.com/PrismarineJS/mineflayer/blob/master/examples/trader.js#L49
 	def attack(self, uuid: str):
+		self._world_sync()
 		entities = [self._bot.entities[id] for id in self._bot.entities] # Python equivalent of `Object.keys(self._bot.entities).map(id => self._bot.entities[id])`
 		match = next((e for e in entities if e.uuid == uuid), None)
 		if match != None:
