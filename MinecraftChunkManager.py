@@ -2,27 +2,38 @@
 # -*- coding: utf-8 -*-
 
 from threading import Lock
-from rtree import index
 from typing import Tuple
 
 class MinecraftChunkManager:
 	def __init__(self):
-		self._loaded_chunks = index.Index()
+		self._loaded_chunks = []
+		self._to_remove = [] # somehow unloaded before loading?
 		self._loaded_chunks_world = None
 		self._lock = Lock()
     
 	def chunk_loaded(self, world: str, x: int, y: int):
 		self._lock.acquire()
 		if world != self._loaded_chunks_world:
-			self._loaded_chunks = index.Index() # clear all chunks
+			# clear all chunks
+			self._loaded_chunks = []
+			self._to_remove = []
+
+			# we're on a different world now
 			self._loaded_chunks_world = world
-		self._loaded_chunks.insert(True, (x, y, x, y))
+
+		if (x, y) in self._to_remove:
+			self._to_remove.remove((x, y)) # we've just removed (not-added) that chunk
+		else:
+			self._loaded_chunks.append((x, y))
 		self._lock.release()
 	
 	def chunk_unloaded(self, world: str, x: int, y: int):
 		self._lock.acquire()
 		if world == self._loaded_chunks_world: # if it's different we already removed those chunks
-			self._loaded_chunks.delete(True, (x, y, x, y))
+			try:
+				self._loaded_chunks.remove((x, y))
+			except ValueError:
+				self._to_remove.append((x, y))
 		self._lock.release()
 	
 	def is_chunk_loaded(self, world: str, x: int, y: int) -> bool:
@@ -30,13 +41,11 @@ class MinecraftChunkManager:
 			return False
 		
 		self._lock.acquire()
-		intersect = list(self._loaded_chunks.intersection((x, y, x, y)))
+		intersect = (x, y) in self._loaded_chunks
 		self._lock.release()
 
-		return len(intersect) > 0
+		return intersect
 
 	@staticmethod
 	def location_to_chunk(x: float|int, y: float|int) -> Tuple[int,int]:
-		x = int(x)
-		y = int(y)
-		return (x>>4, y>>4)
+		return (int(x)>>4, int(y)>>4)
