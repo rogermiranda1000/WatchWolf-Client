@@ -29,7 +29,7 @@ class MineflayerViewer(threading.Thread,Viewer):
 
 	def run(self):
 		mineflayerViewer = require('prismarine-viewer').headless
-		self._client_socket = mineflayerViewer(self._bot, { 'output': '127.0.0.1:' + str(self._port), 'frames': -1, 'width': self._size[0], 'height': self._size[1], 'firstPerson': True })
+		self._client_socket = mineflayerViewer(self._bot, { 'output': '127.0.0.1:' + str(self._port), 'frames': -1, 'width': self._size[0], 'height': self._size[1], 'firstPerson': True, 'logFFMPEG': True })
 
 		self._printer("[v] Starting video thread...")
 		self._conn, _ = self._socket.accept()

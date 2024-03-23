@@ -70,11 +70,6 @@ class MineflayerClient(MinecraftClient):
 		self._connector_thread = Thread(target = self._connector.run, args = ())
 		self._connector_thread.start()
 		
-		@On(self._bot, "spawn")
-		def spawn(_):
-			self._viewer = MineflayerViewer(bot=self._bot, port=self._port+1, printer=self._printer)
-			self._viewer.setup()
-		
 		@On(self._bot, "login")
 		def login(_):
 			self._thread_lock.acquire()
@@ -309,7 +304,9 @@ class MineflayerClient(MinecraftClient):
 			self._printer(f"Entity with uuid={uuid} not found nearby")
 	
 	def start_recording(self) -> int:
-		if self._viewer is None: return -1 # error
+		if self._viewer is None:
+			self._viewer = MineflayerViewer(bot=self._bot, port=self._port+1, printer=self._printer)
+			self._viewer.setup()
 		
 		return self._viewer.start_recording()
 
